@@ -1,0 +1,23 @@
+# Archivos y carpetas de Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Entorno virtual
+env/
+venv/
+
+# Archivos de configuración local
+*.sqlite3
+*.log
+.DS_Store
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+
+# Archivos estáticos generados
+staticfiles/
+
+assets/
