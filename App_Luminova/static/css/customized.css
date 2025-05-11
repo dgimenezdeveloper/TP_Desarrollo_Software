@@ -21,3 +21,20 @@ nav.sidebar .nav-link.custom-active-button.active {
     margin-right: 0.5rem; /* Espacio entre el icono y el texto */
 }
 
+/* Estilo para el contenedor de las tarjetas */
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Esto hará que la tarjeta ocupe toda la altura de su fila */
+}
+
+.card-body {
+    flex-grow: 1; /* Esto hará que el cuerpo de la tarjeta crezca para ocupar el espacio restante */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Espacia el título y el texto de la descripción */
+}
+
+.card-text {
+    margin-bottom: 0; /* Elimina el margen inferior predeterminado del párrafo */
+}
