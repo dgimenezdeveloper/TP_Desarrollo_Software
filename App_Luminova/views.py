@@ -36,7 +36,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-
+#  Funciones para los botones del sidebar del Admin
 def usuarios_view(request):
     return render(request, 'usuarios.html')  
 
@@ -45,3 +45,10 @@ def roles_permisos_view(request):
 
 def auditoria_view(request):
     return render(request, 'auditoria.html')
+
+# Funciones para las páginas de cada sección 
+def compras_view(request):
+    return render(request, 'compras.html')
+
+def deposito_view(request):
+    return render(request, 'deposito.html')

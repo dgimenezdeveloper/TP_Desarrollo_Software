@@ -12,4 +12,7 @@ urlpatterns = [
     path('usuarios/', views.usuarios_view, name='usuarios'),  # Página de usuarios
     path('roles-permisos/', views.roles_permisos_view, name='roles-permisos'),  # Roles y permisos
     path('auditoria/', views.auditoria_view, name='auditoria'),  # Auditoría de accesos
+    
+    path('compras/', views.compras_view, name='compras'), # Página de compras
+    path('deposito/', views.deposito_view, name='deposito'),
 ]
