@@ -3,70 +3,112 @@
 {% block title %}Usuarios Registrados | Luminova{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom flex-column">
-    <h1 class="h2">Usuarios Registrados</h1>
-</div>
-<div class="d-flex justify-content-end mb-3">
-    <a href="#" class="btn btn-primary"><i class="bi bi-person-plus-fill"></i> Crear Usuario</a>
-</div>
-<div class="table-responsive">
-    <table class="table table-striped table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>Id</th>
-                <th>Nombre de Usuario</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>ADM001</td>
-                <td>admin</td>
-                <td>admin@empresa.com</td>
-                <td>administrador</td>
-                <td>activo</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
-                </td>
-            </tr>
-            <tr>
-                <td>DEP001</td>
-                <td>user01</td>
-                <td>user1@empresa.com</td>
-                <td>Depósito</td>
-                <td>activo</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
-                </td>
-            </tr>
-            <tr>
-                <td>PROD01</td>
-                <td>user02</td>
-                <td>user2@empresa.com</td>
-                <td>Producción</td>
-                <td>activo</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
-                </td>
-            </tr>
-            <tr>
-                <td>VNT001</td>
-                <td>user03</td>
-                <td>user3@empresa.com</td>
-                <td>Ventas</td>
-                <td>activo</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
-                </td>
-            </tr>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom flex-column">
+        <h1 class="h2">Usuarios Registrados</h1>
+    </div>
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
+            <i class="bi bi-person-plus-fill"></i> Crear Usuario
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Id</th>
+                    <th>Nombre de Usuario</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.id }}</td>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ usuario.groups.first.name }}</td>
+                        <td>
+                            {% if usuario.is_active %}
+                                Activo
+                            {% else %}
+                                Inactivo
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editarUsuarioModal{{ usuario.id }}">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarUsuarioModal{{ usuario.id }}">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
             </tbody>
-    </table>
-</div>
+        </table>
+    </div>
+
+    <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="crearUsuarioForm" method="post" action="{% url 'App_Luminova:crear_usuario' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for usuario in usuarios %}
+        <div class="modal fade" id="editarUsuarioModal{{ usuario.id }}" tabindex="-1" aria-labelledby="editarUsuarioModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editarUsuarioModalLabel">Editar Usuario</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_Luminova:editar_usuario' usuario.id %}">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for usuario in usuarios %}
+        <div class="modal fade" id="eliminarUsuarioModal{{ usuario.id }}" tabindex="-1" aria-labelledby="eliminarUsuarioModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eliminarUsuarioModalLabel">Eliminar Usuario</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="eliminarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_Luminova:eliminar_usuario' usuario.id %}">
+                            {% csrf_token %}
+                            <p>¿Estás seguro de que deseas eliminar al usuario {{ usuario.username }}?</p>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
