@@ -52,3 +52,17 @@ def compras_view(request):
 
 def deposito_view(request):
     return render(request, 'deposito.html')
+
+def produccion_view(request):
+    return render(request, 'produccion.html')
+
+
+
+def ordenes_view(request):
+    return render(request, 'ordenes.html')
+
+def planificacion_view(request):
+    return render(request, 'planificacion.html')
+
+def reportes_view(request):
+    return render(request, 'reportes.html')

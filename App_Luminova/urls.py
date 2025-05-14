@@ -13,6 +13,10 @@ urlpatterns = [
     path('roles-permisos/', views.roles_permisos_view, name='roles-permisos'),  # Roles y permisos
     path('auditoria/', views.auditoria_view, name='auditoria'),  # Auditoría de accesos
     
-    path('compras/', views.compras_view, name='compras'), # Página de compras
+    path('compras/', views.compras_view, name='compras'), 
     path('deposito/', views.deposito_view, name='deposito'),
+    path('produccion/', views.produccion_view, name='produccion'),
+    path('ordenes/', views.ordenes_view, name='ordenes'),
+    path('planificacion/', views.planificacion_view, name='planificacion'),
+    path('reportes/', views.reportes_view, name='reportes'),
 ]
