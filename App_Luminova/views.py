@@ -115,9 +115,9 @@ def crear_usuario(request):
             rol = Group.objects.get(name=rol_nombre)
             user.groups.add(rol)
         except Group.DoesNotExist:
-             messages.error(request, f'No existe el rol "{rol_nombre}".')
-             user.delete()
-             return redirect('App_Luminova:lista_usuarios')
+            messages.error(request, f'No existe el rol "{rol_nombre}".')
+            user.delete()
+            return redirect('App_Luminova:lista_usuarios')
 
         messages.success(request, 'Usuario creado exitosamente. La contraseña es "temporal".')
         return redirect('App_Luminova:lista_usuarios')
