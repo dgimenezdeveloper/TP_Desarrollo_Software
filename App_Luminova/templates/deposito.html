@@ -1,10 +1,11 @@
 {% extends 'inicio.html' %}
+
 {% load static %}  {# Carga el conjunto de tags staticfiles #}
 
 {% block title %}Depósito - Luminova{% endblock %}
 
 {% block sidebar_content %}
-    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-primary sidebar collapse border-end vh-100" style="border-top-left-radius: 25px; border-top-right-radius: 25px;">
+    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-primary sidebar collapse border-end full-height" style="border-top-left-radius: 25px; border-top-right-radius: 25px;">
         <div class="position-sticky pt-4">
             <h6 class="sidebar-heading d-flex justify-content-center align-items-center px-3 mt-4 mb-1 text-white fw-bold">
                 <span>Depósito</span>
@@ -31,25 +32,25 @@
                         <i class="bi bi-trash-fill me-2"></i> <span class="ms-2">Eliminar Artículo</span>
                     </a>
                 </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#">
-                        <i class="bi bi-folder-fill me-2"></i> <span class="ms-2">Gestionar Categorías</span>
-                    </a>
-                </li>
+
             </ul>
         </div>
     </nav>
 {% endblock %}
 
 {% block content %}
-    <h1 class="text-center">Gestión de Depósito</h1>
-    <div class="row">
-        <div class="col-md-8 bg-primary">
-            <div class="alert alert-info text-center" role="alert">
-                <p>Aquí se mostrará la lista de artículos, categorías y otras funcionalidades del depósito.</p>
-                
-            </div>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div class="row mx-auto border-start">
+        <ul class="nav justify-content-start flex-wrap" style="background-color: white;">
+            <li class="nav-item">
+                <button id="insumos-tab" onclick="mostrarInsumos()" class="nav-link active bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;" aria-current="page">Insumos</button>
+            </li>
+            <li class="nav-item">
+                <button id="productos-tab" onclick="mostrarProductos()" class="nav-link bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;">Prod. Terminados</button>
+            </li>
+        </ul>
+
+        <div class="col-md-8 bg-primary" style="padding-top: 20px; padding-bottom: 20px;">
+            <div id="insumos-content" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <div class="col">
                     <div class="card shadow-sm">
                         <img src="https://www.newark.com/productimages/promo/en_US/56AJ9853-40.jpg" class="card-img-top object-fit-contain" alt="Modulo LED" style="height: 150px;">
@@ -171,38 +172,125 @@
                     </div>
                 </div>
             </div>
+            <div id="productos-content" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display: none;">
+            <div class="col">
+                <div class="card shadow-sm">
+                    <img src="https://www.newark.com/productimages/promo/en_US/56AJ9853-40.jpg" class="card-img-top object-fit-contain" alt="Modulo LED" style="height: 150px;">
+                    <div class="card-body">
+                        <h5 class="card-title">Producto Terminado 1</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card shadow-sm">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCvFSyuHD_M3NaiP-jTb8VxxqjcQVh5G0IToauM86eCRKJJqltJsdECZW0AEEWNT3yMf0&usqp=CAU" class="card-img-top object-fit-contain" alt="Porta LED Cab" style="height: 150px;">
+                    <div class="card-body">
+                        <h5 class="card-title">Producto Terminado 2</h5>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <h2>Órdenes de Producción Recientes</h2>
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Módulo LED D08 sin conductor para bombillas
-                    <span class="badge bg-primary rounded-pill">300</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Porta LED 50-2204CT
-                    <span class="badge bg-primary rounded-pill">150</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Porta LED 50-200NCR
-                    <span class="badge bg-primary rounded-pill">200</span>
-                </li>
-            </ul>
-            <h2 class="mt-3">Productos Terminados Recientes</h2>
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Lámpara de Pie
-                    <span class="badge bg-success rounded-pill">50</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Lámpara Colgante
-                    <span class="badge bg-success rounded-pill">70</span>
-                </li>
-            </ul>
-            <h2 class="mt-3">Stock en Falta</h2>
-            <p>No hay productos en falta actualmente.</p>
+        </div>
+        <div class="col-md-4 bg-primary border-start border-5 border-white" style="margin-left: 0px; padding: 20px; border-radius: 25px;">
+            <table class="table table-borderless text-white">
+                <thead>
+                    <tr>
+                        <th colspan="3" class="bg-primary text-white text-center" style="padding-left: 90px;"> <h4>Órdenes de Producción</h4></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white text-dark">
+                    <tr>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">ID</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Descripción</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Cantidad</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;">1</td>
+                        <td colspan="2" class="text-white" style="background-color: #61B5FA;">Módulo LED D08 sin conductor para bombillas</td>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;"><span>300</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-white text-center" style="background-color: #3E83E8;">2</td>
+                        <td colspan="2" class="text-white" style="background-color: #3E83E8;">Porta LED 50-2204CT</td>
+                        <td colspan="2" class="text-white text-center" style="background-color: #3E83E8;"><span>150</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;">3</td>
+                        <td colspan="2" class="text-white" style="background-color: #61B5FA;">Porta LED 50-200NCR</td>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;"><span>200</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="bg-primary text-center pt-3" style="padding-left: 90px;">
+                            <a class="btn border-white text-primary text-white" style="background-color: #014BAC; width: 180px; height: 40px; border-radius: 15px;" href="{% url 'App_Luminova:depo_seleccion' %}">Seleccionar</a>
+                        </td>
+
+                    </tr>
+                </tbody>
+                <thead>
+                    <tr style="border-bottom: 3px solid white;">
+                        <td colspan="3" class="bg-primary text-center pt-3"></td>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="bg-primary text-white text-center" style="padding-left: 90px;"> <h4>Productos Terminados</h4></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white text-dark">
+                    <tr>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;" >ID</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Descripción</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Cantidad</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;">1</td>
+                        <td colspan="2" class="text-white" style="background-color: #61B5FA;">Lámpara de Pie</td>
+                        <td colspan="2" class="text-white text-center" style="background-color: #61B5FA;"><span>50</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-white text-center" style="background-color: #3E83E8;">2</td>
+                        <td colspan="2" class="text-white" style="background-color: #3E83E8;">Lámpara Colgante</td>
+                        <td colspan="2" class="text-white text-center" style="background-color: #3E83E8;"><span>70</span></td>
+                    </tr>
+                </tbody>
+                <thead>
+                    <tr style="border-bottom: 3px solid white;">
+                        <td colspan="3" class="bg-primary text-center pt-3"></td>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="bg-primary text-white text-center" style="padding-left: 90px;"><h4>Stock en Falta</h4></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white text-dark">
+                    <tr>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">ID</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Descripción</th>
+                        <th colspan="2" class="text-white" style="background-color: #014BAC;">Cantidad</th>
+                    </tr>
+                    <tr>
+                        <td colspan="8" class="text-white text-center" style="background-color: #A19898;">No hay productos en falta actualmente.</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
+    <script>
+        function mostrarInsumos() {
+            document.getElementById("insumos-content").style.display = "flex";
+            document.getElementById("productos-content").style.display = "none";
+            document.getElementById("insumos-tab").classList.add("active");
+            document.getElementById("productos-tab").classList.remove("active");
+
+        }
+
+        function mostrarProductos() {
+            document.getElementById("insumos-content").style.display = "none";
+            document.getElementById("productos-content").style.display = "flex";
+            document.getElementById("insumos-tab").classList.remove("active");
+            document.getElementById("productos-tab").classList.add("active");
+        }
+
+        // Mostrar insumos por defecto
+        mostrarInsumos();
+    </script>
     <script src="{% static 'js/cards_deposito.js' %}"></script>
 {% endblock %}
