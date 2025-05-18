@@ -20,79 +20,75 @@
             </tr>
         </thead>
         <tbody>
+            {% for rol in roles %}
             <tr>
-                <td>Admin</td>
-                <td>Acceso Total</td>
-                <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalAdminPermisos">Ver</a></td>
-                <td>Todos los Módulos</td>
-                <td>Administrativo</td>
+                <td>{{ rol.name|capfirst }}</td>
+                <td>
+                    {{ rol.descripcion_extendida.descripcion|default:"Sin descripción" }}
+                </td>
+                <td>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#modal{{ rol.id }}Permisos">Ver</a>
+                </td>
+                <td>
+                    {% if rol.name == "administrador" %}
+                        Todos los módulos
+                    {% elif rol.name == "ventas" %}
+                        Ventas, Producción, Stock
+                    {% elif rol.name == "compras" %}
+                        Compras, Proveedores, Stock
+                    {% elif rol.name == "produccion" %}
+                        Producción, Órdenes de Producción
+                    {% elif rol.name == "deposito" %}
+                        Depósito, Stock, Envíos
+                    {% elif rol.name == "control de calidad" %}
+                        Control de Calidad, Reportes
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rol.name == "administrador" %}
+                        Alto
+                    {% elif rol.name == "ventas" or rol.name == "compras" %}
+                        Medio
+                    {% elif rol.name == "produccion" or rol.name == "deposito" or rol.name == "control de calidad" %}
+                        Bajo
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>
                     <a href="#" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-plus"></i> Agregar</a>
                     <a href="#" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-pencil"></i> Editar</a>
                     <a href="#" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
                 </td>
             </tr>
-            <tr>
-                <td>Ventas</td>
-                <td>Crear y Gestionar OP</td>
-                <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalVentasPermisos">Ver</a></td>
-                <td>Ventas</td>
-                <td>Intermedio</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-plus"></i> Agregar</a>
-                    <a href="#" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-pencil"></i> Editar</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
-                </td>
-            </tr>
-            <tr>
-                <td>Compras</td>
-                <td>Crear y Gestionar OC</td>
-                <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalComprasPermisos">Ver</a></td>
-                <td>Compras, Prov.</td>
-                <td>Intermedio</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-plus"></i> Agregar</a>
-                    <a href="#" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-pencil"></i> Editar</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
-                </td>
-            </tr>
-            <tr>
-                <td>Producción</td>
-                <td>Visualizar OP</td>
-                <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalProduccionPermisos">Ver</a></td>
-                <td>Producción</td>
-                <td>Básico</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-plus"></i> Agregar</a>
-                    <a href="#" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-pencil"></i> Editar</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
-                </td>
-            </tr>
-            <tr>
-                <td>Depósito</td>
-                <td>Gestionar Stock y Envíos</td>
-                <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalDepositoPermisos">Ver</a></td>
-                <td>Depósito</td>
-                <td>Intermedio</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-plus"></i> Agregar</a>
-                    <a href="#" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-pencil"></i> Editar</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
-                </td>
-            </tr>
-            </tbody>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 
-<div class="modal fade" id="modalAdminPermisos" tabindex="-1" aria-labelledby="modalAdminPermisosLabel" aria-hidden="true">
+{% for rol in roles %}
+<div class="modal fade" id="modal{{ rol.id }}Permisos" tabindex="-1" aria-labelledby="modal{{ rol.id }}PermisosLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalAdminPermisosLabel">Permisos de Admin</h5>
+                <h5 class="modal-title" id="modal{{ rol.id }}PermisosLabel">Permisos de {{ rol.name|capfirst }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p>Este rol tiene acceso a todos los módulos y funciones del sistema, incluyendo la gestión de usuarios, roles y la configuración general. Su nivel de acceso es el más alto.</p>
+                <h6>Descripción</h6>
+                <p>{{ rol.descripcion_extendida.descripcion|default:"Sin descripción" }}</p>
+                <h6>Permisos asignados</h6>
+                {% if rol.permissions.all %}
+                    <ul>
+                    {% for perm in rol.permissions.all %}
+                        <li>{{ perm.name }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Sin permisos asignados</p>
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -100,77 +96,5 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="modalVentasPermisos" tabindex="-1" aria-labelledby="modalVentasPermisosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalVentasPermisosLabel">Permisos de Ventas</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Creación y seguimiento de las órdenes de producción, por lo que tiene acceso al módulo de Ventas. Su nivel de acceso es intermedio, ya que puede crear y modificar información específica.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalComprasPermisos" tabindex="-1" aria-labelledby="modalComprasPermisosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalComprasPermisosLabel">Permisos de Compras</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Este rol está encargado de interactuar con los proveedores y generar órdenes de compra. Tiene acceso a los módulos de Compras y Proveedores. Su nivel de acceso también es intermedio.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalProduccionPermisos" tabindex="-1" aria-labelledby="modalProduccionPermisosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalProduccionPermisosLabel">Permisos de Producción</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Este rol necesita ver las órdenes de producción para saber qué ensamblar y también debe tener visibilidad del stock de componentes en el Depósito. Su nivel de acceso es básico, ya que principalmente consume información.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalDepositoPermisos" tabindex="-1" aria-labelledby="modalDepositoPermisosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalDepositoPermisosLabel">Permisos de Depósito</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p>Este rol gestiona el inventario de componentes y se encarga de preparar los envíos, lo que lo relaciona con el módulo de Depósito y podría necesitar información de las órdenes de compra (Compras). Su nivel de acceso es intermedio debido a la gestión de inventario.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // No se necesita JavaScript adicional para la funcionalidad básica de los modales de Bootstrap
-</script>
-
+{% endfor %}
 {% endblock %}

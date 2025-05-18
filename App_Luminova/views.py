@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Case, When, Value, IntegerField
 from django.contrib import messages
+from .models import AuditoriaAcceso, RolDescripcion
 
 
 def inicio(request):
@@ -40,10 +41,12 @@ def logout_view(request):
 
 #  Funciones para los botones del sidebar del Admin
 def roles_permisos_view(request):
-    return render(request, 'roles_permisos.html')
+    roles = Group.objects.all().select_related('descripcion_extendida').prefetch_related('permissions')
+    return render(request, 'roles_permisos.html', {'roles': roles})
 
 def auditoria_view(request):
-    return render(request, 'auditoria.html')
+    auditorias = AuditoriaAcceso.objects.select_related('usuario').order_by('-fecha_hora')
+    return render(request, 'auditoria.html', {'auditorias': auditorias})
 
 # Funciones para las páginas de cada sección 
 def compras_view(request):
@@ -77,14 +80,8 @@ def es_admin(user):
 @login_required
 @user_passes_test(es_admin)
 def lista_usuarios(request):
-    # Ordenar usuarios: primero el superusuario, luego los demás por ID
-    usuarios = User.objects.annotate(
-        es_superuser=Case(
-            When(is_superuser=True, then=Value(0)),
-            default=Value(1),
-            output_field=IntegerField()
-        )
-    ).order_by('es_superuser', 'id')
+    # Mostrar solo usuarios que NO son superusuarios
+    usuarios = User.objects.filter(is_superuser=False).order_by('id')
     form = UserCreationForm()
     return render(request, 'usuarios.html', {'usuarios': usuarios, 'form': form})
 
@@ -162,3 +159,11 @@ def eliminar_usuario(request, id):
         messages.success(request, 'Usuario eliminado exitosamente.')
         return redirect('App_Luminova:lista_usuarios')
     return render(request, 'eliminar_usuario.html', {'usuario': usuario})
+
+
+#  Funciones para el boton Seleccionar de la tabla de OP// los botones del sidebar de Deposito
+def depo_seleccion(request):
+    return render(request, 'depo_seleccion.html')
+
+def depo_enviar(request):
+    return render(request, 'depo_enviar.html')

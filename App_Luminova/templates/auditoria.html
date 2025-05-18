@@ -16,19 +16,18 @@
         </tr>
     </thead>
     <tbody>
-        <!-- Aquí puedes iterar sobre los registros de auditoría -->
+        {% for registro in auditorias %}
         <tr>
-            <td>1</td>
-            <td>admin</td>
-            <td>Inicio de sesión</td>
-            <td>2025-05-08 14:00:00</td>
+            <td>{{ registro.id }}</td>
+            <td>{{ registro.usuario.username }}</td>
+            <td>{{ registro.accion }}</td>
+            <td>{{ registro.fecha_hora }}</td>
         </tr>
+        {% empty %}
         <tr>
-            <td>2</td>
-            <td>usuario1</td>
-            <td>Cierre de sesión</td>
-            <td>2025-05-08 14:30:00</td>
+            <td colspan="4" class="text-center">No hay registros de auditoría.</td>
         </tr>
+        {% endfor %}
     </tbody>
 </table>
 {% endblock %}

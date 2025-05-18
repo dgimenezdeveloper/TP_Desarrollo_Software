@@ -27,4 +27,8 @@ urlpatterns = [
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/editar/<int:id>/', views.editar_usuario, name='editar_usuario'),
     path('usuarios/eliminar/<int:id>/', views.eliminar_usuario, name='eliminar_usuario'),
+    
+#  Paths para el boton Seleccionar de la tabla de OP// los botones del sidebar de Deposito
+    path('depo-seleccion/', views.depo_seleccion, name='depo_seleccion'),
+    path('depo-enviar/', views.depo_enviar, name='depo_enviar'),
 ]
