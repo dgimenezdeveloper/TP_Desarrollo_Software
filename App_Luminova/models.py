@@ -1,27 +1,43 @@
+# App_LUMINOVA/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group # Asegúrate de importar Group si lo usas
 
 class ProductoTerminado(models.Model):
     descripcion = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=50)
+    categoria = models.CharField(max_length=50) # Assuming this is still a CharField for now, as per your forms.py
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
 
     def __str__(self):
         return self.descripcion
 
+# Definición del modelo CategoriaInsumo
+class CategoriaInsumo(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)
+    # Puedes añadir un campo para la imagen de la categoría si lo deseas
+    # imagen = models.ImageField(upload_to='categorias_insumos/', null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Categoría de Insumo"
+        verbose_name_plural = "Categorías de Insumos"
+
+    def __str__(self):
+        return self.nombre
+
 class Insumo(models.Model):
     descripcion = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=50)
+    # ¡IMPORTANTE!: Esto DEBE ser ForeignKey
+    categoria = models.ForeignKey(CategoriaInsumo, on_delete=models.SET_NULL, null=True, blank=True) # <-- ¡CORRECCIÓN CRÍTICA!
     fabricante = models.CharField(max_length=60)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    tiempo_entrega = models.IntegerField()  # Tiempo de entrega en días
-    imagen = models.ImageField(null=True, blank=True, upload_to='insumos' )
+    tiempo_entrega = models.IntegerField() # Tiempo de entrega en días
+    imagen = models.ImageField(null=True, blank=True)
     proveedor = models.CharField(max_length=60)
     stock = models.IntegerField()
 
     def __str__(self):
-        return f"{self.descripcion}"
+        # Asegúrate de que insumo.categoria sea un objeto antes de acceder a .nombre
+        return f"{self.descripcion} ({self.categoria.nombre if self.categoria else 'Sin Categoría'})"
 
 class Orden(models.Model):
     TIPO_ORDEN_CHOICES = [
@@ -29,36 +45,25 @@ class Orden(models.Model):
         ('compra', 'Orden de Compra'),
         ('venta', 'Orden de Venta'),
     ]
-
-    numero_orden = models.CharField(max_length=20)
-    fecha = models.DateField()
+    numero_orden = models.CharField(max_length=20, unique=True)
     tipo_orden = models.CharField(max_length=10, choices=TIPO_ORDEN_CHOICES)
-    estado = models.CharField(max_length=20, default='Pendiente')
+    fecha_creacion = models.DateField(auto_now_add=True)
+    # Puedes añadir un ForeignKey a Insumo o ProductoTerminado si una orden es para un solo tipo
+    # O un ManyToManyField si una orden puede contener múltiples items
+    # items = models.ManyToManyField(Insumo, through='OrdenInsumo') # Ejemplo
+    # items_productos = models.ManyToManyField(ProductoTerminado, through='OrdenProducto') # Ejemplo
 
     def __str__(self):
         return self.numero_orden
 
-class DetalleOrden(models.Model):
-    orden = models.ForeignKey(Orden, on_delete=models.CASCADE)
-    insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE, null=True, blank=True)
-    producto_terminado = models.ForeignKey(ProductoTerminado, on_delete=models.CASCADE, null=True, blank=True)
-    cantidad = models.IntegerField()
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+class Proveedor(models.Model):
+    nombre = models.CharField(max_length=100)
+    contacto = models.CharField(max_length=100)
+    telefono = models.CharField(max_length=15)
+    email = models.EmailField()
 
     def __str__(self):
-        if self.insumo:
-            return f"Detalle de Orden {self.orden.numero_orden}: {self.insumo.descripcion} x {self.cantidad}"
-        elif self.producto_terminado:
-            return f"Detalle de Orden {self.orden.numero_orden}: {self.producto_terminado.descripcion} x {self.cantidad}"
-        return f"Detalle de Orden {self.orden.numero_orden}"
-
-class AuditoriaAcceso(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    fecha_acceso = models.DateTimeField(auto_now_add=True)
-    accion = models.CharField(max_length=255)
-
-    def __str__(self):
-        return f'{self.usuario.username} - {self.fecha_acceso} - {self.accion}'
+        return self.nombre
 
 class Cliente(models.Model):
     nombre = models.CharField(max_length=100)
@@ -70,7 +75,7 @@ class Cliente(models.Model):
         return self.nombre
 
 class Factura(models.Model):
-    numero_factura = models.CharField(max_length=20)
+    numero_factura = models.CharField(max_length=20, unique=True)
     fecha = models.DateField()
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     total = models.DecimalField(max_digits=10, decimal_places=2)
@@ -78,11 +83,22 @@ class Factura(models.Model):
     def __str__(self):
         return self.numero_factura
 
-from django.contrib.auth.models import Group
-
 class RolDescripcion(models.Model):
     group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='descripcion_extendida')
     descripcion = models.TextField("Descripción del rol", blank=True)
 
     def __str__(self):
-        return self.group.name
+        return f"Descripción para {self.group.name}"
+
+class AuditoriaAcceso(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    fecha_acceso = models.DateTimeField(auto_now_add=True)
+    accion = models.CharField(max_length=255) # Ejemplo: 'login', 'logout', 'acceso_deposito'
+
+    class Meta:
+        verbose_name = "Auditoría de Acceso"
+        verbose_name_plural = "Auditorías de Acceso"
+        ordering = ['-fecha_acceso']
+
+    def __str__(self):
+        return f"[{self.fecha_acceso.strftime('%Y-%m-%d %H:%M:%S')}] {self.usuario} - {self.accion}"

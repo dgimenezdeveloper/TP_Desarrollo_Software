@@ -4,20 +4,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.decorators import user_passes_test, login_required
-from .models import AuditoriaAcceso
+
+# ¡IMPORTANTE!: Asegúrate de que esta línea contenga EXACTAMENTE los modelos que DEFINES en models.py
+# Si alguno de estos no está en tu models.py, ELIMÍNALO de esta lista.
+from .models import (
+    Insumo, ProductoTerminado, CategoriaInsumo, # Asegúrate de que estos existen y estén definidos correctamente
+    AuditoriaAcceso, # Asegúrate de que AuditoriaAcceso está definido en models.py, si no, ELIMÍNALO
+    Orden, Proveedor, Cliente, Factura, RolDescripcion # Asegúrate de que estos existen en models.py
+)
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import *
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Count
-from .forms import InsumoForm, ProductoTerminadoForm # Importa los nuevos formularios
+from .forms import InsumoForm, ProductoTerminadoForm
 
 # Crea tus vistas aquí.
 
-# Funciones para las vistas del navbar
 def compras(req):
     return render(req, "compras.html")
 
@@ -28,24 +34,14 @@ def ventas(req):
     return render(req, "ventas.html")
 
 def deposito(req):
-    # Obtener categorías distintas para insumos y ordenarlas alfabéticamente
-    categorias_insumos = Insumo.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
-    
-    # Obtener categorías distintas para productos terminados y ordenarlas alfabéticamente
+    categorias_insumos_objetos = CategoriaInsumo.objects.all().order_by('nombre')
     categorias_productos_terminados = ProductoTerminado.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
 
-    # Ya no necesitas pasar todos los insumos y productos terminados directamente
-    # insumos = Insumo.objects.all()
-    # productos_terminados = ProductoTerminado.objects.all()
-    
-    # Instancia los formularios para pasarlos al contexto
     form_agregar_insumo = InsumoForm()
     form_agregar_producto = ProductoTerminadoForm()
 
     context = {
-        # "insumos": insumos, # Eliminado, ya no se necesitan pasar todos directamente
-        # "productos_terminados": productos_terminados, # Eliminado, ya no se necesitan pasar todos directamente
-        "categorias_insumos": categorias_insumos,
+        "categorias_insumos": categorias_insumos_objetos,
         "categorias_productos_terminados": categorias_productos_terminados,
         "form_agregar_insumo": form_agregar_insumo,
         "form_agregar_producto": form_agregar_producto,
@@ -57,13 +53,12 @@ def control_calidad(req):
 
 def inicio(request):
     if request.user.is_authenticated:
-        return redirect('App_LUMINOVA:dashboard')  # Redirige al dashboard si está autenticado
-    return redirect('App_LUMINOVA:login')  # Redirige al login si no está autenticado
+        return redirect('App_LUMINOVA:dashboard')
+    return redirect('App_LUMINOVA:login')
 
-# Funciones para el login y logout
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('App_LUMINOVA:dashboard') # Redirección corregida a un name.
+        return redirect('App_LUMINOVA:dashboard')
     if request.method == 'POST':
         user = authenticate(
             request,
@@ -88,15 +83,14 @@ def logout_view(request):
     return redirect('App_LUMINOVA:login')
 
 def roles_permisos(request):
-    # Aquí deberías obtener los roles desde tu modelo, por ejemplo:
-    # roles = Rol.objects.all()
-    roles = []  # Cambia esto por tu consulta real
+    roles = []
     context = {'roles': roles}
     return render(request, 'roles_permisos.html', context)
 
 def auditoria(request):
-    # Aquí deberías obtener los datos de auditoría desde tu modelo si tienes uno
-    auditorias = []  # Cambia esto por tu consulta real
+    # Asegúrate de que AuditoriaAcceso exista y se importe correctamente
+    # Si no quieres usar este modelo, puedes eliminar esta vista y las referencias a ella.
+    auditorias = AuditoriaAcceso.objects.all().order_by('-fecha_acceso') # Ejemplo de cómo usarlo
     context = {'auditorias': auditorias}
     return render(request, 'auditoria.html', context)
 
@@ -131,7 +125,6 @@ def eliminar_usuario(request, id):
     usuario.delete()
     return redirect('lista_usuarios')
 
-# Funciones de los botones del sidebar de deposito
 def depo_seleccion(request):
     return render(request, "depo-seleccion.html")
 
@@ -146,30 +139,33 @@ def agregar_insumo_ajax(request):
         form = InsumoForm(request.POST, request.FILES)
         if form.is_valid():
             insumo = form.save()
-            return JsonResponse({'success': True, 'insumo_id': insumo.id})
+            categoria_nombre = insumo.categoria.nombre if insumo.categoria else None
+            return JsonResponse({'success': True, 'insumo_id': insumo.id, 'categoria_nombre': categoria_nombre})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
     return JsonResponse({'success': False, 'error': 'Método de petición inválido.'}, status=400)
 
 @require_GET
 def get_insumos_por_categoria(request):
-    categoria = request.GET.get('categoria', '')
-    if categoria:
-        insumos = Insumo.objects.filter(categoria=categoria)
-    else:
-        insumos = Insumo.objects.all()
+    categoria_nombre = request.GET.get('categoria', '')
     
-    insumos_data = [{
-        'id': insumo.id,
-        'descripcion': insumo.descripcion,
-        'categoria': insumo.categoria,
-        'fabricante': insumo.fabricante,
-        'precio_unitario': str(insumo.precio_unitario),
-        'tiempo_entrega': insumo.tiempo_entrega,
-        'imagen_url': insumo.imagen.url if insumo.imagen else '',
-        'proveedor': insumo.proveedor,
-        'stock': insumo.stock,
-    } for insumo in insumos]
+    insumos_query = Insumo.objects.all()
+    if categoria_nombre:
+        insumos_query = insumos_query.filter(categoria__nombre=categoria_nombre)
+    
+    insumos_data = []
+    for insumo in insumos_query:
+        insumos_data.append({
+            'id': insumo.id,
+            'descripcion': insumo.descripcion,
+            'categoria': insumo.categoria.nombre if insumo.categoria else None,
+            'fabricante': insumo.fabricante,
+            'precio_unitario': str(insumo.precio_unitario),
+            'tiempo_entrega': insumo.tiempo_entrega,
+            'imagen_url': insumo.imagen.url if insumo.imagen else '',
+            'proveedor': insumo.proveedor,
+            'stock': insumo.stock,
+        })
     return JsonResponse({'success': True, 'insumos': insumos_data})
 
 @require_GET
@@ -180,7 +176,7 @@ def get_insumo_data(request):
         data = {
             'id': insumo.id,
             'descripcion': insumo.descripcion,
-            'categoria': insumo.categoria,
+            'categoria': insumo.categoria.nombre if insumo.categoria else None,
             'fabricante': insumo.fabricante,
             'precio_unitario': str(insumo.precio_unitario),
             'tiempo_entrega': insumo.tiempo_entrega,
@@ -210,12 +206,11 @@ def editar_insumo_ajax(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-# Vistas AJAX para Productos Terminados
+# Vistas AJAX para Productos Terminados (se mantienen como CharField por ahora)
 @csrf_exempt
 @require_POST
 def agregar_producto_ajax(request):
     if request.method == 'POST':
-        # Asegúrate de pasar request.FILES si ProductoTerminadoForm tiene un campo de imagen
         form = ProductoTerminadoForm(request.POST, request.FILES) 
         if form.is_valid():
             producto = form.save()
@@ -235,11 +230,9 @@ def get_productos_terminados(request):
     productos_data = [{
         'id': producto.id,
         'descripcion': producto.descripcion,
-        'categoria': producto.categoria,
+        'categoria': producto.categoria, # Se mantiene como CharField
         'precio_unitario': str(producto.precio_unitario),
         'stock': producto.stock,
-        # Si ProductoTerminado tiene campo de imagen, añadirlo aquí:
-        # 'imagen_url': producto.imagen.url if producto.imagen else '',
     } for producto in productos]
     return JsonResponse({'success': True, 'productos': productos_data})
 
@@ -251,11 +244,9 @@ def get_producto_terminado_data(request):
         data = {
             'id': producto.id,
             'descripcion': producto.descripcion,
-            'categoria': producto.categoria,
+            'categoria': producto.categoria, # Se mantiene como CharField
             'precio_unitario': str(producto.precio_unitario),
             'stock': producto.stock,
-            # Si ProductoTerminado tiene campo de imagen, añadirlo aquí:
-            # 'imagen_url': producto.imagen.url if producto.imagen else '',
         }
         return JsonResponse({'success': True, 'producto': data})
     except ProductoTerminado.DoesNotExist:
@@ -267,7 +258,6 @@ def editar_producto_terminado_ajax(request):
     producto_id = request.POST.get('id')
     try:
         producto = ProductoTerminado.objects.get(id=producto_id)
-        # Asegúrate de pasar request.FILES si ProductoTerminadoForm tiene un campo de imagen
         form = ProductoTerminadoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
             form.save()
@@ -284,7 +274,7 @@ def editar_producto_terminado_ajax(request):
 def eliminar_articulo_ajax(request):
     if request.method == 'POST':
         item_id = request.POST.get('id')
-        model_type = request.POST.get('model_type') # 'insumo' o 'producto'
+        model_type = request.POST.get('model_type')
 
         if not item_id or not model_type:
             return JsonResponse({'success': False, 'error': 'ID y tipo de modelo son requeridos.'}, status=400)
@@ -306,7 +296,6 @@ def eliminar_articulo_ajax(request):
     return JsonResponse({'success': False, 'error': 'Método de petición inválido.'}, status=400)
 
 
-# Otras vistas (de tu archivo original, mantener tal cual)
 def desglose(req):
     return render(req, "desglose.html")
 
