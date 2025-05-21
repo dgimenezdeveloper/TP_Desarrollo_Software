@@ -1,22 +1,69 @@
+# App_LUMINOVA/views.py
+
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Case, When, Value, IntegerField
+from django.contrib.auth.decorators import user_passes_test, login_required
+from .models import AuditoriaAcceso
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from .models import *
 from django.contrib import messages
-from .models import AuditoriaAcceso, RolDescripcion
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.db.models import Count
+from .forms import InsumoForm, ProductoTerminadoForm # Importa los nuevos formularios
 
+# Crea tus vistas aquí.
+
+# Funciones para las vistas del navbar
+def compras(req):
+    return render(req, "compras.html")
+
+def produccion(req):
+    return render(req, "produccion.html")
+
+def ventas(req):
+    return render(req, "ventas.html")
+
+def deposito(req):
+    # Obtener categorías distintas para insumos y ordenarlas alfabéticamente
+    categorias_insumos = Insumo.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
+    
+    # Obtener categorías distintas para productos terminados y ordenarlas alfabéticamente
+    categorias_productos_terminados = ProductoTerminado.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
+
+    # Ya no necesitas pasar todos los insumos y productos terminados directamente
+    # insumos = Insumo.objects.all()
+    # productos_terminados = ProductoTerminado.objects.all()
+    
+    # Instancia los formularios para pasarlos al contexto
+    form_agregar_insumo = InsumoForm()
+    form_agregar_producto = ProductoTerminadoForm()
+
+    context = {
+        # "insumos": insumos, # Eliminado, ya no se necesitan pasar todos directamente
+        # "productos_terminados": productos_terminados, # Eliminado, ya no se necesitan pasar todos directamente
+        "categorias_insumos": categorias_insumos,
+        "categorias_productos_terminados": categorias_productos_terminados,
+        "form_agregar_insumo": form_agregar_insumo,
+        "form_agregar_producto": form_agregar_producto,
+    }
+    return render(req, "deposito.html", context)
+
+def control_calidad(req):
+    return render(req, "control_calidad.html")
 
 def inicio(request):
     if request.user.is_authenticated:
-        return redirect('App_Luminova:dashboard')  # Redirige al dashboard si está autenticado
-    return redirect('App_Luminova:login')  # Redirige al login si no está autenticado
+        return redirect('App_LUMINOVA:dashboard')  # Redirige al dashboard si está autenticado
+    return redirect('App_LUMINOVA:login')  # Redirige al login si no está autenticado
 
+# Funciones para el login y logout
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard.html')
-
+        return redirect('App_LUMINOVA:dashboard') # Redirección corregida a un name.
     if request.method == 'POST':
         user = authenticate(
             request,
@@ -25,145 +72,258 @@ def login_view(request):
         )
         if user:
             login(request, user)
-            return redirect('App_Luminova:dashboard')
+            return redirect('App_LUMINOVA:dashboard')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
-
-    return render(request, 'login.html')  
+    return render(request, 'login.html')
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'dashboard.html') 
+    return render(request, 'dashboard.html')
 
+@login_required
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    messages.info(request, "Has cerrado sesión correctamente.")
+    return redirect('App_LUMINOVA:login')
 
-#  Funciones para los botones del sidebar del Admin
-def roles_permisos_view(request):
-    roles = Group.objects.all().select_related('descripcion_extendida').prefetch_related('permissions')
-    return render(request, 'roles_permisos.html', {'roles': roles})
+def roles_permisos(request):
+    # Aquí deberías obtener los roles desde tu modelo, por ejemplo:
+    # roles = Rol.objects.all()
+    roles = []  # Cambia esto por tu consulta real
+    context = {'roles': roles}
+    return render(request, 'roles_permisos.html', context)
 
-def auditoria_view(request):
-    auditorias = AuditoriaAcceso.objects.select_related('usuario').order_by('-fecha_hora')
-    return render(request, 'auditoria.html', {'auditorias': auditorias})
+def auditoria(request):
+    # Aquí deberías obtener los datos de auditoría desde tu modelo si tienes uno
+    auditorias = []  # Cambia esto por tu consulta real
+    context = {'auditorias': auditorias}
+    return render(request, 'auditoria.html', context)
 
-# Funciones para las páginas de cada sección 
-def compras_view(request):
-    return render(request, 'compras.html')
-
-def deposito_view(request):
-    return render(request, 'deposito.html')
-
-def produccion_view(request):
-    return render(request, 'produccion.html')
-
-
-# Funciones para los botones del sidebar de Producción
-def ordenes_view(request):
-    return render(request, 'ordenes.html')
-
-def planificacion_view(request):
-    return render(request, 'planificacion.html')
-
-def reportes_view(request):
-    return render(request, 'reportes.html')
-
-
-
-# Funciones CRUD para los Usuarios
-# Función para verificar si el usuario es administrador
-def es_admin(user):
-    return user.is_superuser
-
-# Lista de usuarios
-@login_required
-@user_passes_test(es_admin)
+# CRUD de usuario
 def lista_usuarios(request):
-    # Mostrar solo usuarios que NO son superusuarios
-    usuarios = User.objects.filter(is_superuser=False).order_by('id')
-    form = UserCreationForm()
-    return render(request, 'usuarios.html', {'usuarios': usuarios, 'form': form})
+    usuarios = User.objects.all()
+    return render(request, 'usuarios.html', {'usuarios': usuarios})
 
-# Creación de usuario
-@login_required
-@user_passes_test(es_admin)
 def crear_usuario(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        rol_nombre = request.POST.get('rol')
-        estado = request.POST.get('estado')
-
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'El nombre de usuario ya existe.')
-            return redirect('App_Luminova:lista_usuarios')
-
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'El correo electrónico ya existe.')
-            return redirect('App_Luminova:lista_usuarios')
-
-        user = User.objects.create_user(username=username, email=email, is_active=(estado == 'Activo'))
-        user.set_password('temporal')  # Establecer una contraseña temporal
-        user.save()
-
-        # Asignar rol
-        try:
-            rol = Group.objects.get(name=rol_nombre)
-            user.groups.add(rol)
-        except Group.DoesNotExist:
-            messages.error(request, f'No existe el rol "{rol_nombre}".')
-            user.delete()
-            return redirect('App_Luminova:lista_usuarios')
-
-        messages.success(request, 'Usuario creado exitosamente. La contraseña es "temporal".')
-        return redirect('App_Luminova:lista_usuarios')
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_usuarios')
     else:
         form = UserCreationForm()
-        return render(request, 'usuarios.html', {'form': form})
+    return render(request, 'crear_usuario.html', {'form': form})
 
-# Edición de usuario
-@login_required
-@user_passes_test(es_admin)
 def editar_usuario(request, id):
     usuario = get_object_or_404(User, id=id)
     if request.method == 'POST':
-        usuario.username = request.POST.get('username')
-        usuario.email = request.POST.get('email')
-        rol_nombre = request.POST.get('rol')
-        usuario.is_active = request.POST.get('estado') == 'Activo'
-        usuario.save()
-
-         # Actualizar rol
-        try:
-            rol = Group.objects.get(name=rol_nombre)
-            usuario.groups.clear()  # Elimina los roles anteriores
-            usuario.groups.add(rol) # Agrega el nuevo rol
-        except Group.DoesNotExist:
-             messages.error(request, f'No existe el rol "{rol_nombre}".')
-             return redirect('App_Luminova:lista_usuarios')
-
-        messages.success(request, 'Usuario editado exitosamente.')
-        return redirect('App_Luminova:lista_usuarios')
+        form = UserChangeForm(request.POST, instance=usuario)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_usuarios')
     else:
         form = UserChangeForm(instance=usuario)
-        return render(request, 'usuarios.html', {'form': form, 'usuario': usuario})
+    return render(request, 'editar_usuario.html', {'form': form})
 
-# Eliminación de usuario
-@login_required
-@user_passes_test(es_admin)
 def eliminar_usuario(request, id):
     usuario = get_object_or_404(User, id=id)
-    if request.method == 'POST':
-        usuario.delete()
-        messages.success(request, 'Usuario eliminado exitosamente.')
-        return redirect('App_Luminova:lista_usuarios')
-    return render(request, 'eliminar_usuario.html', {'usuario': usuario})
+    usuario.delete()
+    return redirect('lista_usuarios')
 
-
-#  Funciones para el boton Seleccionar de la tabla de OP// los botones del sidebar de Deposito
+# Funciones de los botones del sidebar de deposito
 def depo_seleccion(request):
-    return render(request, 'depo_seleccion.html')
+    return render(request, "depo-seleccion.html")
 
 def depo_enviar(request):
-    return render(request, 'depo_enviar.html')
+    return render(request, "depo-enviar.html")
+
+# Vistas AJAX para Insumos
+@csrf_exempt
+@require_POST
+def agregar_insumo_ajax(request):
+    if request.method == 'POST':
+        form = InsumoForm(request.POST, request.FILES)
+        if form.is_valid():
+            insumo = form.save()
+            return JsonResponse({'success': True, 'insumo_id': insumo.id})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False, 'error': 'Método de petición inválido.'}, status=400)
+
+@require_GET
+def get_insumos_por_categoria(request):
+    categoria = request.GET.get('categoria', '')
+    if categoria:
+        insumos = Insumo.objects.filter(categoria=categoria)
+    else:
+        insumos = Insumo.objects.all()
+    
+    insumos_data = [{
+        'id': insumo.id,
+        'descripcion': insumo.descripcion,
+        'categoria': insumo.categoria,
+        'fabricante': insumo.fabricante,
+        'precio_unitario': str(insumo.precio_unitario),
+        'tiempo_entrega': insumo.tiempo_entrega,
+        'imagen_url': insumo.imagen.url if insumo.imagen else '',
+        'proveedor': insumo.proveedor,
+        'stock': insumo.stock,
+    } for insumo in insumos]
+    return JsonResponse({'success': True, 'insumos': insumos_data})
+
+@require_GET
+def get_insumo_data(request):
+    insumo_id = request.GET.get('id')
+    try:
+        insumo = Insumo.objects.get(id=insumo_id)
+        data = {
+            'id': insumo.id,
+            'descripcion': insumo.descripcion,
+            'categoria': insumo.categoria,
+            'fabricante': insumo.fabricante,
+            'precio_unitario': str(insumo.precio_unitario),
+            'tiempo_entrega': insumo.tiempo_entrega,
+            'imagen_url': insumo.imagen.url if insumo.imagen else '',
+            'proveedor': insumo.proveedor,
+            'stock': insumo.stock,
+        }
+        return JsonResponse({'success': True, 'insumo': data})
+    except Insumo.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Insumo no encontrado'}, status=404)
+
+@csrf_exempt
+@require_POST
+def editar_insumo_ajax(request):
+    insumo_id = request.POST.get('id')
+    try:
+        insumo = Insumo.objects.get(id=insumo_id)
+        form = InsumoForm(request.POST, request.FILES, instance=insumo)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    except Insumo.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Insumo no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# Vistas AJAX para Productos Terminados
+@csrf_exempt
+@require_POST
+def agregar_producto_ajax(request):
+    if request.method == 'POST':
+        # Asegúrate de pasar request.FILES si ProductoTerminadoForm tiene un campo de imagen
+        form = ProductoTerminadoForm(request.POST, request.FILES) 
+        if form.is_valid():
+            producto = form.save()
+            return JsonResponse({'success': True, 'producto_id': producto.id})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False, 'error': 'Método de petición inválido.'}, status=400)
+
+@require_GET
+def get_productos_terminados(request):
+    categoria = request.GET.get('categoria', '')
+    if categoria:
+        productos = ProductoTerminado.objects.filter(categoria=categoria)
+    else:
+        productos = ProductoTerminado.objects.all()
+    
+    productos_data = [{
+        'id': producto.id,
+        'descripcion': producto.descripcion,
+        'categoria': producto.categoria,
+        'precio_unitario': str(producto.precio_unitario),
+        'stock': producto.stock,
+        # Si ProductoTerminado tiene campo de imagen, añadirlo aquí:
+        # 'imagen_url': producto.imagen.url if producto.imagen else '',
+    } for producto in productos]
+    return JsonResponse({'success': True, 'productos': productos_data})
+
+@require_GET
+def get_producto_terminado_data(request):
+    producto_id = request.GET.get('id')
+    try:
+        producto = ProductoTerminado.objects.get(id=producto_id)
+        data = {
+            'id': producto.id,
+            'descripcion': producto.descripcion,
+            'categoria': producto.categoria,
+            'precio_unitario': str(producto.precio_unitario),
+            'stock': producto.stock,
+            # Si ProductoTerminado tiene campo de imagen, añadirlo aquí:
+            # 'imagen_url': producto.imagen.url if producto.imagen else '',
+        }
+        return JsonResponse({'success': True, 'producto': data})
+    except ProductoTerminado.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Producto no encontrado'}, status=404)
+
+@csrf_exempt
+@require_POST
+def editar_producto_terminado_ajax(request):
+    producto_id = request.POST.get('id')
+    try:
+        producto = ProductoTerminado.objects.get(id=producto_id)
+        # Asegúrate de pasar request.FILES si ProductoTerminadoForm tiene un campo de imagen
+        form = ProductoTerminadoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    except ProductoTerminado.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Producto no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_POST
+def eliminar_articulo_ajax(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('id')
+        model_type = request.POST.get('model_type') # 'insumo' o 'producto'
+
+        if not item_id or not model_type:
+            return JsonResponse({'success': False, 'error': 'ID y tipo de modelo son requeridos.'}, status=400)
+
+        try:
+            if model_type == 'insumo':
+                item = Insumo.objects.get(id=item_id)
+            elif model_type == 'producto':
+                item = ProductoTerminado.objects.get(id=item_id)
+            else:
+                return JsonResponse({'success': False, 'error': 'Tipo de modelo inválido.'}, status=400)
+            
+            item.delete()
+            return JsonResponse({'success': True})
+        except (Insumo.DoesNotExist, ProductoTerminado.DoesNotExist):
+            return JsonResponse({'success': False, 'error': 'Artículo no encontrado.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'success': False, 'error': 'Método de petición inválido.'}, status=400)
+
+
+# Otras vistas (de tu archivo original, mantener tal cual)
+def desglose(req):
+    return render(req, "desglose.html")
+
+def seguimiento(req):
+    return render(req, "seguimiento.html")
+
+def tracking(req):
+    return render(req, "tracking.html")
+
+def desglose2(req):
+    return render(req, "desglose2.html")
+
+def ordenes(req):
+    return render(req, "ordenes.html")
+
+def planificacion(req):
+    return render(req, "planificacion.html")
+
+def reportes(req):
+    return render(req, "reportes.html")

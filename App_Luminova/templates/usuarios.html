@@ -65,7 +65,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="crearUsuarioForm" method="post" action="{% url 'App_Luminova:crear_usuario' %}">
+                    <form id="crearUsuarioForm" method="post" action="{% url 'App_LUMINOVA:crear_usuario' %}">
                         {% csrf_token %}
                         <div class="form-group row p-1">
                             <label for="username" class="col-sm-5 col-form-label">Nombre de Usuario:</label>
@@ -122,7 +122,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="editarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_Luminova:editar_usuario' usuario.id %}">
+                        <form id="editarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_LUMINOVA:editar_usuario' usuario.id %}">
                             {% csrf_token %}
                             <div class="form-group row p-1">
                                 <label for="username{{ usuario.id }}" class="col-sm-5 col-form-label">Nombre de Usuario:</label>
@@ -185,7 +185,7 @@
                         <p class="fs-5 mb-4">¿Estás seguro de que deseas eliminar al usuario <strong>{{ usuario.username }}</strong>?</p>
                     </div>
                     <div class="modal-footer d-flex justify-content-center">
-                        <form id="eliminarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_Luminova:eliminar_usuario' usuario.id %}">
+                        <form id="eliminarUsuarioForm{{ usuario.id }}" method="post" action="{% url 'App_LUMINOVA:eliminar_usuario' usuario.id %}">
                             {% csrf_token %}
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-danger">Eliminar</button>
