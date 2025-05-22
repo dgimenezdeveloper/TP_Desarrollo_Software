@@ -1,0 +1,22 @@
+<!-- App_Luminova/templates/modals/modal_editar_producto.html -->
+<div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarProducto" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="edit_producto_id" name="id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarProductoLabel">Editar Producto Terminado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_agregar_producto.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,29 @@
+<!-- App_Luminova/templates/modals/modal_buscar_articulo.html -->
+<div class="modal fade" id="modalBuscarArticulo" tabindex="-1" aria-labelledby="modalBuscarArticuloLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBuscarArticuloLabel">Buscar Artículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="search_query" class="form-label">Buscar por Descripción</label>
+                    <input type="text" class="form-control" id="search_query" placeholder="Escribe la descripción...">
+                </div>
+                <div class="mb-3">
+                    <label for="search_type" class="form-label">Tipo de Artículo</label>
+                    <select class="form-select" id="search_type">
+                        <option value="insumo">Insumo</option>
+                        <option value="producto">Producto Terminado</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnBuscarArticulo">Buscar</button>
+
+                <div id="search_results" class="mt-4">
+                    {# Los resultados de búsqueda se mostrarán aquí #}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

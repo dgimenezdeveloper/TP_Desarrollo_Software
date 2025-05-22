@@ -1,0 +1,21 @@
+<!-- App_Luminova/templates/modals/modal_crear_categoria_producto.html -->
+<div class="modal fade" id="modalCrearCategoriaProducto" tabindex="-1" aria-labelledby="modalCrearCategoriaProductoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formCrearCategoriaProducto" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCrearCategoriaProductoLabel">Crear Categoría de Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_crear_categoria_producto.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Categoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+<!-- App_Luminova/templates/modals/modal_agregar_producto.html -->
+<div class="modal fade" id="modalAgregarProducto" tabindex="-1" aria-labelledby="modalAgregarProductoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formAgregarProducto" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAgregarProductoLabel">Agregar Nuevo Producto Terminado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Categoría:</label>
+                        <p id="display_agregar_producto_categoria_nombre" class="form-control-plaintext ps-2" style="border: 1px solid #ced4da; border-radius: .25rem; background-color: #e9ecef;"></p>
+                        <input type="hidden" name="categoria" id="hidden_agregar_producto_categoria_id">
+                    </div>
+                    {% for field in form_agregar_producto %}
+                        {% if field.name != 'categoria' %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                                {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
