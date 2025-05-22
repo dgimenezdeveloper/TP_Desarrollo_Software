@@ -271,14 +271,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        {# Campo Categoria manejado por JS y texto #}
                         <div class="mb-3">
                             <label class="form-label fw-bold">Categoría:</label>
                             <p id="display_agregar_insumo_categoria_nombre" class="form-control-plaintext ps-2" style="border: 1px solid #ced4da; border-radius: .25rem; background-color: #e9ecef;"></p>
                             <input type="hidden" name="categoria" id="hidden_agregar_insumo_categoria_id">
                         </div>
-
-                        {# Renderizar otros campos del formulario excepto 'categoria' #}
                         {% for field in form_agregar_insumo %}
                             {% if field.name != 'categoria' %}
                                 <div class="mb-3">
@@ -299,7 +296,7 @@
         </div>
     </div>
     
-    {# MODAL PARA EDITAR INSUMO (Mantiene el Select para categoría) #}
+    {# MODAL PARA EDITAR INSUMO #}
     <div class="modal fade" id="modalEditarInsumo" tabindex="-1" aria-labelledby="modalEditarInsumoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -311,7 +308,8 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        {{ form_agregar_insumo.as_p }} {# Reutiliza el form_agregar_insumo que tiene el select #}
+                        {# El form_agregar_insumo incluye el select de categoria, que es lo que queremos para editar #}
+                        {{ form_agregar_insumo.as_p }} 
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -358,7 +356,7 @@
         </div>
     </div>
 
-    {# MODAL PARA EDITAR PRODUCTO TERMINADO (Mantiene el Select para categoría) #}
+    {# MODAL PARA EDITAR PRODUCTO TERMINADO #}
     <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -390,6 +388,14 @@
         let currentTableModalCategoryId = null;
         let currentTableModalCategoryName = null;
         let currentTableModalItemType = null;
+        
+        // Referencias a los modales de Bootstrap para controlarlos programáticamente
+        let itemsTableModalInstance = null;
+        let agregarInsumoModalInstance = null;
+        let editarInsumoModalInstance = null;
+        let agregarProductoModalInstance = null;
+        let editarProductoModalInstance = null;
+
 
         function mostrarTab(tipo) {
             document.getElementById("insumos-content").style.display = (tipo === 'insumos') ? "flex" : "none";
@@ -421,12 +427,10 @@
                         </a>
                     </div>
                 </div>`;
-            // Si el contenedor decía "no hay categorías", lo limpiamos antes de añadir la primera.
             if (container.querySelector('p.text-white')) {
                 container.innerHTML = '';
             }
             container.insertAdjacentHTML('beforeend', cardHtml);
-            // Re-asignar listeners a las nuevas tarjetas
             document.querySelectorAll(`#${containerId} .open-category-modal`).forEach(cardLink => {
                 cardLink.removeEventListener('click', handleCategoryCardClick);
                 cardLink.addEventListener('click', handleCategoryCardClick);
@@ -486,7 +490,7 @@
                  newRowContent = `<td>${itemData.id}</td><td><img src="${imageUrl}" alt="${itemData.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td><td>${itemData.descripcion}</td><td>${itemData.precio_unitario}</td><td>${itemData.stock}</td><td><button class="btn btn-sm btn-info btn-edit-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-danger btn-delete-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button></td>`;
             }
             rowElement.innerHTML = newRowContent;
-            addTableButtonListeners();
+            addTableButtonListeners(); // Re-vincular listeners a los botones de la fila actualizada
         }
         
         function addRowToTable(itemData, itemType) {
@@ -507,6 +511,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar instancias de modales de Bootstrap
+            if (document.getElementById('modalItemsTable')) itemsTableModalInstance = new bootstrap.Modal(document.getElementById('modalItemsTable'));
+            if (document.getElementById('modalAgregarInsumo')) agregarInsumoModalInstance = new bootstrap.Modal(document.getElementById('modalAgregarInsumo'));
+            if (document.getElementById('modalEditarInsumo')) editarInsumoModalInstance = new bootstrap.Modal(document.getElementById('modalEditarInsumo'));
+            if (document.getElementById('modalAgregarProducto')) agregarProductoModalInstance = new bootstrap.Modal(document.getElementById('modalAgregarProducto'));
+            if (document.getElementById('modalEditarProducto')) editarProductoModalInstance = new bootstrap.Modal(document.getElementById('modalEditarProducto'));
+
+
             // Crear Categoría Insumo
             document.getElementById('formCrearCategoriaInsumo').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -515,7 +527,7 @@
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Categoría de insumo creada!');
-                        renderCategoryCard(data, 'insumo');
+                        renderCategoryCard(data, 'insumo'); // data ya tiene categoria_id
                         bootstrap.Modal.getInstance(document.getElementById('modalCrearCategoriaInsumo')).hide();
                         this.reset();
                     } else { alert('Error: ' + JSON.stringify(data.errors)); }
@@ -530,56 +542,58 @@
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Categoría de producto creada!');
-                        renderCategoryCard(data, 'producto');
+                        renderCategoryCard(data, 'producto'); // data ya tiene categoria_id
                         bootstrap.Modal.getInstance(document.getElementById('modalCrearCategoriaProducto')).hide();
                         this.reset();
                     } else { alert('Error: ' + JSON.stringify(data.errors)); }
                 });
             });
-
+            
+            // Clic en tarjetas de categoría
             document.querySelectorAll('.open-category-modal').forEach(cardLink => {
                 cardLink.addEventListener('click', handleCategoryCardClick);
             });
 
+            // Botón "Agregar Nuevo Item" desde el modal de lista
             document.getElementById('btnOpenAgregarItemModal').addEventListener('click', function() {
-                var modalToOpenId, formId, displayNameElementId, hiddenIdElementId;
+                var modalToOpenInstance, formId, displayNameElementId, hiddenIdElementId;
 
                 if (currentTableModalItemType === 'insumo') {
-                    modalToOpenId = 'modalAgregarInsumo';
+                    modalToOpenInstance = agregarInsumoModalInstance;
                     formId = 'formAgregarInsumo';
                     displayNameElementId = 'display_agregar_insumo_categoria_nombre';
                     hiddenIdElementId = 'hidden_agregar_insumo_categoria_id';
                 } else if (currentTableModalItemType === 'producto') {
-                    modalToOpenId = 'modalAgregarProducto';
+                    modalToOpenInstance = agregarProductoModalInstance;
                     formId = 'formAgregarProducto';
                     displayNameElementId = 'display_agregar_producto_categoria_nombre';
                     hiddenIdElementId = 'hidden_agregar_producto_categoria_id';
                 } else { return; }
 
                 const form = document.getElementById(formId);
-                form.reset();
+                form.reset(); // Limpiar el formulario
                 document.getElementById(displayNameElementId).textContent = currentTableModalCategoryName;
                 document.getElementById(hiddenIdElementId).value = currentTableModalCategoryId;
                 
-                var modal = new bootstrap.Modal(document.getElementById(modalToOpenId));
-                modal.show();
-                bootstrap.Modal.getInstance(document.getElementById('modalItemsTable')).hide();
+                if(itemsTableModalInstance) itemsTableModalInstance.hide(); // Cerrar modal de lista
+                if(modalToOpenInstance) modalToOpenInstance.show(); // Abrir modal de agregar
             });
 
             // Submit Agregar Insumo
             document.getElementById('formAgregarInsumo').addEventListener('submit', function(e) {
                 e.preventDefault();
-                const formData = new FormData(this); // El campo 'categoria' (hidden) ya tiene el ID
+                const formData = new FormData(this);
                 fetch("{% url 'App_LUMINOVA:agregar_insumo_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Insumo agregado!');
-                        if (currentTableModalCategoryId == data.insumo.categoria_id_actual && currentTableModalItemType === 'insumo') {
-                            addRowToTable(data.insumo, 'insumo');
-                        }
-                        bootstrap.Modal.getInstance(document.getElementById('modalAgregarInsumo')).hide();
+                        if (agregarInsumoModalInstance) agregarInsumoModalInstance.hide();
                         this.reset();
-                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                        // Reabrir y recargar tabla de items si es la misma categoría
+                        if (currentTableModalCategoryId == data.insumo.categoria_id_actual && currentTableModalItemType === 'insumo') {
+                            fetchAndShowItemsForCategory(currentTableModalCategoryId, currentTableModalItemType, currentTableModalCategoryName);
+                        }
+                    } else { alert('Error al agregar insumo: ' + JSON.stringify(data.errors)); }
                 });
             });
             
@@ -591,11 +605,11 @@
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Insumo editado!');
+                        if(editarInsumoModalInstance) editarInsumoModalInstance.hide();
                         if (currentTableModalCategoryId == data.insumo.categoria_id_actual && currentTableModalItemType === 'insumo') {
-                            updateRowInTable(data.insumo, 'insumo');
+                           fetchAndShowItemsForCategory(currentTableModalCategoryId, currentTableModalItemType, currentTableModalCategoryName);
                         }
-                        bootstrap.Modal.getInstance(document.getElementById('modalEditarInsumo')).hide();
-                    } else { alert('Error al editar: ' + JSON.stringify(data.errors));}
+                    } else { alert('Error al editar insumo: ' + JSON.stringify(data.errors));}
                 });
             });
 
@@ -607,12 +621,12 @@
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Producto terminado agregado!');
-                        if (currentTableModalCategoryId == data.producto.categoria_id_actual && currentTableModalItemType === 'producto') {
-                           addRowToTable(data.producto, 'producto');
-                        }
-                        bootstrap.Modal.getInstance(document.getElementById('modalAgregarProducto')).hide();
+                        if(agregarProductoModalInstance) agregarProductoModalInstance.hide();
                         this.reset();
-                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                        if (currentTableModalCategoryId == data.producto.categoria_id_actual && currentTableModalItemType === 'producto') {
+                           fetchAndShowItemsForCategory(currentTableModalCategoryId, currentTableModalItemType, currentTableModalCategoryName);
+                        }
+                    } else { alert('Error al agregar producto: ' + JSON.stringify(data.errors)); }
                 });
             });
             
@@ -624,14 +638,51 @@
                 .then(response => response.json()).then(data => {
                     if (data.success) {
                         alert('Producto editado!');
+                         if(editarProductoModalInstance) editarProductoModalInstance.hide();
                         if (currentTableModalCategoryId == data.producto.categoria_id_actual && currentTableModalItemType === 'producto') {
-                            updateRowInTable(data.producto, 'producto');
+                            fetchAndShowItemsForCategory(currentTableModalCategoryId, currentTableModalItemType, currentTableModalCategoryName);
                         }
-                        bootstrap.Modal.getInstance(document.getElementById('modalEditarProducto')).hide();
-                    } else { alert('Error al editar: ' + JSON.stringify(data.errors)); }
+                    } else { alert('Error al editar producto: ' + JSON.stringify(data.errors)); }
                 });
             });
-        });
+        }); // Fin DOMContentLoaded
+        
+        function fetchAndShowItemsForCategory(categoryId, itemType, categoryName) {
+            if(itemsTableModalInstance) itemsTableModalInstance.show(); // Asegurarse que el modal de tabla esté visible
+            
+            document.getElementById('modal-loading-message').style.display = 'block';
+            document.getElementById('modal-items-tbody').innerHTML = '';
+            document.getElementById('modal-no-items-message').style.display = 'none';
+            document.getElementById('modal-error-message').style.display = 'none';
+
+            fetch(`{% url 'App_LUMINOVA:get_items_por_categoria_ajax' %}?categoria_id=${categoryId}&item_type=${itemType}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modal-loading-message').style.display = 'none';
+                if (data.success) {
+                    if (data.items.length > 0) {
+                        populateItemsTable(data.items, itemType, categoryName);
+                    } else {
+                        document.getElementById('modalCategoryTitle').textContent = categoryName;
+                        document.getElementById('itemTypeInModalText').textContent = itemType === 'insumo' ? 'Insumo' : 'Producto';
+                        document.getElementById('modal-no-items-message').style.display = 'block';
+                        const headerRow = document.getElementById('table-header-row');
+                        headerRow.innerHTML = ''; 
+                        if (itemType === 'insumo') {
+                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Fabricante</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                        } else if (itemType === 'producto') {
+                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                        }
+                    }
+                } else {
+                    document.getElementById('modal-error-message').style.display = 'block';
+                }
+            }).catch(error => {
+                document.getElementById('modal-loading-message').style.display = 'none';
+                document.getElementById('modal-error-message').style.display = 'block';
+            });
+        }
+
 
         function handleCategoryCardClick(event) {
             event.preventDefault();
@@ -639,43 +690,7 @@
             currentTableModalCategoryId = card.dataset.categoryId;
             currentTableModalCategoryName = card.dataset.categoryName;
             currentTableModalItemType = card.dataset.itemType;
-
-            document.getElementById('modal-loading-message').style.display = 'block';
-            document.getElementById('modal-items-tbody').innerHTML = '';
-            document.getElementById('modal-no-items-message').style.display = 'none';
-            document.getElementById('modal-error-message').style.display = 'none';
-            
-            var itemsTableModal = new bootstrap.Modal(document.getElementById('modalItemsTable'));
-            itemsTableModal.show();
-
-            fetch(`{% url 'App_LUMINOVA:get_items_por_categoria_ajax' %}?categoria_id=${currentTableModalCategoryId}&item_type=${currentTableModalItemType}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('modal-loading-message').style.display = 'none';
-                if (data.success) {
-                    if (data.items.length > 0) {
-                        populateItemsTable(data.items, currentTableModalItemType, data.categoria_nombre);
-                    } else {
-                        document.getElementById('modalCategoryTitle').textContent = data.categoria_nombre;
-                        document.getElementById('itemTypeInModalText').textContent = currentTableModalItemType === 'insumo' ? 'Insumo' : 'Producto';
-                        document.getElementById('modal-no-items-message').style.display = 'block';
-                        const headerRow = document.getElementById('table-header-row');
-                        headerRow.innerHTML = ''; 
-                        if (currentTableModalItemType === 'insumo') {
-                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Fabricante</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
-                        } else if (currentTableModalItemType === 'producto') {
-                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
-                        }
-                    }
-                } else {
-                    document.getElementById('modal-error-message').style.display = 'block';
-                    console.error("Error fetching items:", data.error);
-                }
-            }).catch(error => {
-                document.getElementById('modal-loading-message').style.display = 'none';
-                document.getElementById('modal-error-message').style.display = 'block';
-                console.error('Error en la petición AJAX:', error);
-            });
+            fetchAndShowItemsForCategory(currentTableModalCategoryId, currentTableModalItemType, currentTableModalCategoryName);
         }
         
         function addTableButtonListeners() {
@@ -695,36 +710,30 @@
             const itemType = button.dataset.type;
 
             let getDataUrl = '';
-            let modalToOpenId = '';
+            let modalToOpenInstance;
             let formId = '';
-            let currentImageId = ''; // Para el <img id="current_imagen_...">
-
+            
             if (itemType === 'insumo') {
                 getDataUrl = `{% url 'App_LUMINOVA:get_insumo_data' %}?id=${itemId}`;
-                modalToOpenId = 'modalEditarInsumo';
+                modalToOpenInstance = editarInsumoModalInstance;
                 formId = 'formEditarInsumo';
-                currentImageId = 'current_imagen_insumo'; // Asumiendo que el form de edición tiene un img con este id
             } else if (itemType === 'producto') {
                 getDataUrl = `{% url 'App_LUMINOVA:get_producto_terminado_data' %}?id=${itemId}`;
-                modalToOpenId = 'modalEditarProducto';
+                modalToOpenInstance = editarProductoModalInstance;
                 formId = 'formEditarProducto';
-                currentImageId = 'current_imagen_producto'; // Asumiendo
             }
 
             fetch(getDataUrl)
             .then(response => response.json())
-            .then(dataResponse => { // Renombrado para evitar conflicto con 'data' del dataset
+            .then(dataResponse => {
                 if (dataResponse.success) {
                     const itemData = itemType === 'insumo' ? dataResponse.insumo : dataResponse.producto;
                     const form = document.getElementById(formId);
                     
                     form.querySelector(`[name="id"]`).value = itemData.id;
                     form.querySelector(`[name="descripcion"]`).value = itemData.descripcion;
-                    
-                    // El campo categoría en los forms de EDICIÓN es un SELECT
                     const categoriaSelect = form.querySelector(`[name="categoria"]`);
-                    if (categoriaSelect) categoriaSelect.value = itemData.categoria; // itemData.categoria es el ID
-
+                    if (categoriaSelect) categoriaSelect.value = itemData.categoria; // ID de la categoría
                     form.querySelector(`[name="precio_unitario"]`).value = itemData.precio_unitario;
                     form.querySelector(`[name="stock"]`).value = itemData.stock;
 
@@ -734,21 +743,13 @@
                         form.querySelector(`[name="proveedor"]`).value = itemData.proveedor;
                     }
                     
-                    const currentImageElement = form.querySelector(`img[id^="current_imagen_"]`); // Asumiendo que existe en el form de edición
-                    if (currentImageElement) {
-                        if (itemData.imagen_url) {
-                            currentImageElement.src = itemData.imagen_url;
-                            currentImageElement.style.display = 'block';
-                        } else {
-                            currentImageElement.style.display = 'none';
-                        }
-                    }
+                    const currentImageElement = form.querySelector(`img[id^="current_imagen_"]`);
+                    if (currentImageElement) { /* Lógica para mostrar imagen actual si existe */ }
                     const imageInput = form.querySelector('input[type="file"][name="imagen"]');
                     if(imageInput) imageInput.value = '';
 
-
-                    var modal = new bootstrap.Modal(document.getElementById(modalToOpenId));
-                    modal.show();
+                    if(itemsTableModalInstance) itemsTableModalInstance.hide(); // Cerrar modal de lista
+                    if(modalToOpenInstance) modalToOpenInstance.show(); // Abrir modal de edición
                 } else {
                     alert('Error al cargar datos para editar: ' + dataResponse.error);
                 }
