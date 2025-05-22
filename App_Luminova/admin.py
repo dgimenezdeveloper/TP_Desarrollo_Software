@@ -8,12 +8,12 @@ from .models import (
     AuditoriaAcceso,
     Cliente,
     Factura,
-    RolDescripcion,# Ya lo tenías, pero lo incluyo para que esté todo junto
-    CategoriaInsumo, # Si lo necesitas, descomenta esta línea
+    RolDescripcion,
+    CategoriaInsumo,
+    CategoriaProductoTerminado, # AÑADIDO
+    Proveedor
 )
 
-
-# Registra tus modelos aquí para que aparezcan en el panel de administración
 admin.site.register(Insumo)
 admin.site.register(ProductoTerminado)
 admin.site.register(Orden)
@@ -21,7 +21,11 @@ admin.site.register(AuditoriaAcceso)
 admin.site.register(Cliente)
 admin.site.register(Factura)
 admin.site.register(RolDescripcion)
-admin.site.register(CategoriaInsumo) # Descomenta si necesitas registrar CategoriaInsumo
+admin.site.register(CategoriaInsumo)
+admin.site.register(CategoriaProductoTerminado) # AÑADIDO
+admin.site.register(Proveedor)
+
+# ... (tus personalizaciones de ModelAdmin pueden seguir aquí)
 
 
 # Opcional: Aquí puedes agregar clases de ModelAdmin para personalizar la visualización

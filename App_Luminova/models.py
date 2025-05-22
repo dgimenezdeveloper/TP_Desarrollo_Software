@@ -1,21 +1,36 @@
 # App_LUMINOVA/models.py
 from django.db import models
-from django.contrib.auth.models import User, Group # Asegúrate de importar Group si lo usas
+from django.contrib.auth.models import User, Group
+
+# NUEVO: Modelo CategoriaProductoTerminado
+class CategoriaProductoTerminado(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)
+    imagen = models.ImageField(upload_to='categorias_productos/', null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Categoría de Producto Terminado"
+        verbose_name_plural = "Categorías de Productos Terminados"
+
+    def __str__(self):
+        return self.nombre
 
 class ProductoTerminado(models.Model):
     descripcion = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=50) # Assuming this is still a CharField for now, as per your forms.py
+    # CAMBIO: ForeignKey a CategoriaProductoTerminado
+    categoria = models.ForeignKey(CategoriaProductoTerminado, on_delete=models.SET_NULL, null=True, blank=True)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
+    # OPCIONAL: Si quieres imagen para ProductoTerminado
+    imagen = models.ImageField(upload_to='productos_terminados/', null=True, blank=True)
+
 
     def __str__(self):
-        return self.descripcion
+        return f"{self.descripcion} ({self.categoria.nombre if self.categoria else 'Sin Categoría'})"
 
-# Definición del modelo CategoriaInsumo
 class CategoriaInsumo(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
-    # Puedes añadir un campo para la imagen de la categoría si lo deseas
-    # imagen = models.ImageField(upload_to='categorias_insumos/', null=True, blank=True)
+    # AÑADIDO: Campo de imagen
+    imagen = models.ImageField(upload_to='categorias_insumos/', null=True, blank=True)
 
     class Meta:
         verbose_name = "Categoría de Insumo"
@@ -26,17 +41,15 @@ class CategoriaInsumo(models.Model):
 
 class Insumo(models.Model):
     descripcion = models.CharField(max_length=100)
-    # ¡IMPORTANTE!: Esto DEBE ser ForeignKey
-    categoria = models.ForeignKey(CategoriaInsumo, on_delete=models.SET_NULL, null=True, blank=True) # <-- ¡CORRECCIÓN CRÍTICA!
+    categoria = models.ForeignKey(CategoriaInsumo, on_delete=models.SET_NULL, null=True, blank=True)
     fabricante = models.CharField(max_length=60)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     tiempo_entrega = models.IntegerField() # Tiempo de entrega en días
-    imagen = models.ImageField(null=True, blank=True)
+    imagen = models.ImageField(upload_to='insumos/', null=True, blank=True) # Modificada ruta de upload
     proveedor = models.CharField(max_length=60)
     stock = models.IntegerField()
 
     def __str__(self):
-        # Asegúrate de que insumo.categoria sea un objeto antes de acceder a .nombre
         return f"{self.descripcion} ({self.categoria.nombre if self.categoria else 'Sin Categoría'})"
 
 class Orden(models.Model):
@@ -48,10 +61,6 @@ class Orden(models.Model):
     numero_orden = models.CharField(max_length=20, unique=True)
     tipo_orden = models.CharField(max_length=10, choices=TIPO_ORDEN_CHOICES)
     fecha_creacion = models.DateField(auto_now_add=True)
-    # Puedes añadir un ForeignKey a Insumo o ProductoTerminado si una orden es para un solo tipo
-    # O un ManyToManyField si una orden puede contener múltiples items
-    # items = models.ManyToManyField(Insumo, through='OrdenInsumo') # Ejemplo
-    # items_productos = models.ManyToManyField(ProductoTerminado, through='OrdenProducto') # Ejemplo
 
     def __str__(self):
         return self.numero_orden
@@ -93,7 +102,7 @@ class RolDescripcion(models.Model):
 class AuditoriaAcceso(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     fecha_acceso = models.DateTimeField(auto_now_add=True)
-    accion = models.CharField(max_length=255) # Ejemplo: 'login', 'logout', 'acceso_deposito'
+    accion = models.CharField(max_length=255)
 
     class Meta:
         verbose_name = "Auditoría de Acceso"

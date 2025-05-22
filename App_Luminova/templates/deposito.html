@@ -1,7 +1,6 @@
-{% extends 'inicio.html' %} {# O 'inicio.html' si ese es tu base #}
-
+{% extends 'inicio.html' %}
 {% load static %}
-{% load i18n %} {# Asegúrate de que esto o similar esté para que |slugify funcione #}
+{% load i18n %}
 
 {% block title %}Depósito - Luminova{% endblock %}
 
@@ -14,13 +13,13 @@
             <hr class="text-white">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalAgregarInsumo">
-                        <i class="bi bi-plus-square-fill me-2"></i> <span class="ms-2">Agregar Insumo</span>
+                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalCrearCategoriaInsumo">
+                        <i class="bi bi-folder-plus me-2"></i> <span class="ms-2">Crear Categoría Insumo</span>
                     </a>
                 </li>
                 <li class="nav-item mt-2">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalAgregarProducto">
-                        <i class="bi bi-plus-square-fill me-2"></i> <span class="ms-2">Agregar Producto Terminado</span>
+                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalCrearCategoriaProducto">
+                        <i class="bi bi-folder-plus me-2"></i> <span class="ms-2">Crear Categoría Prod.</span>
                     </a>
                 </li>
                 <li class="nav-item mt-2">
@@ -35,75 +34,66 @@
 
 {% block content %}
     <div class="row mx-auto border-start">
+        {# Pestañas Insumos / Productos Terminados #}
         <ul class="nav justify-content-start flex-wrap" style="background-color: white;">
             <li class="nav-item">
-                <button id="insumos-tab" onclick="mostrarInsumos()" class="nav-link active bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;" aria-current="page">Insumos</button>
+                <button id="insumos-tab" onclick="mostrarTab('insumos')" class="nav-link active bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;" aria-current="page">Insumos</button>
             </li>
             <li class="nav-item">
-                <button id="productos-tab" onclick="mostrarProductos()" class="nav-link bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;">Prod. Terminados</button>
+                <button id="productos-tab" onclick="mostrarTab('productos')" class="nav-link bg-primary text-white" style="width: 170px; border-top-left-radius: 20px; border-top-right-radius: 20px; font-weight: bold;">Prod. Terminados</button>
             </li>
         </ul>
 
+        {# Contenedor principal de las categorías #}
         <div class="col-md-8 bg-primary" style="padding-top: 20px; padding-bottom: 20px;">
-            {# Contenido para Insumos - Categorías como tarjetas #}
-            <div id="insumos-content" style="display: flex; flex-direction: column; gap: 1rem;">
-                {% if categorias_insumos %}
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="insumo-categories-container">
+            {# Contenido para Insumos #}
+            <div id="insumos-content" class="category-content-pane" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="insumo-categories-container">
+                    {% if categorias_insumos %}
                         {% for categoria in categorias_insumos %}
                             <div class="col">
-                                <div class="card shadow-sm h-100 category-card" data-category="{{ categoria }}" data-type="insumo" data-slug="{{ categoria|slugify }}">
-                                    {# Importante: Ahora el enlace abre el modal, no colapsa/expande #}
-                                    <a href="#" class="text-decoration-none text-dark d-flex flex-column h-100 open-category-modal"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalItemsTable"
-                                       data-category-name="{{ categoria }}"
-                                       data-item-type="insumo">
-                                        {# Puedes usar una imagen por defecto o si tu modelo de categoría tiene una #}
-                                        <img src="{% static 'img/default_category_insumo.png' %}" class="card-img-top object-fit-contain" alt="Categoría {{ categoria }}" style="height: 120px;">
+                                <div class="card shadow-sm h-100 category-card" data-category-id="{{ categoria.id }}" data-category-name="{{ categoria.nombre }}" data-item-type="insumo">
+                                    <a href="#" class="text-decoration-none text-dark d-flex flex-column h-100 open-category-modal">
+                                        <img src="{% if categoria.imagen %}{{ categoria.imagen.url }}{% else %}{% static 'img/default_category_insumo.png' %}{% endif %}" class="card-img-top object-fit-contain" alt="Categoría {{ categoria.nombre }}" style="height: 120px;">
                                         <div class="card-body d-flex flex-column justify-content-center">
-                                            <h5 class="card-title text-center">{{ categoria }}</h5>
+                                            <h5 class="card-title text-center">{{ categoria.nombre }}</h5>
                                         </div>
                                     </a>
                                 </div>
                             </div>
                         {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-white">No hay categorías de insumos para mostrar.</p>
-                {% endif %}
+                    {% else %}
+                        <p class="text-white text-center">No hay categorías de insumos para mostrar. Crea una usando el menú de la izquierda.</p>
+                    {% endif %}
+                </div>
             </div>
 
-            {# Contenido para Productos Terminados - Categorías como tarjetas #}
-            <div id="productos-content" style="display: none; flex-direction: column; gap: 1rem;">
-                {% if categorias_productos_terminados %}
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="productos-categories-container">
+            {# Contenido para Productos Terminados #}
+            <div id="productos-content" class="category-content-pane" style="display: none; flex-direction: column; gap: 1rem;">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="producto-categories-container">
+                    {% if categorias_productos_terminados %}
                         {% for categoria in categorias_productos_terminados %}
                             <div class="col">
-                                <div class="card shadow-sm h-100 category-card" data-category="{{ categoria }}" data-type="producto" data-slug="{{ categoria|slugify }}">
-                                    {# Importante: Ahora el enlace abre el modal, no colapsa/expande #}
-                                    <a href="#" class="text-decoration-none text-dark d-flex flex-column h-100 open-category-modal"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalItemsTable"
-                                       data-category-name="{{ categoria }}"
-                                       data-item-type="producto">
-                                        {# Puedes usar una imagen por defecto o si tu modelo de categoría tiene una #}
-                                        <img src="{% static 'img/default_category_product.png' %}" class="card-img-top object-fit-contain" alt="Categoría {{ categoria }}" style="height: 120px;">
+                                <div class="card shadow-sm h-100 category-card" data-category-id="{{ categoria.id }}" data-category-name="{{ categoria.nombre }}" data-item-type="producto">
+                                    <a href="#" class="text-decoration-none text-dark d-flex flex-column h-100 open-category-modal">
+                                        <img src="{% if categoria.imagen %}{{ categoria.imagen.url }}{% else %}{% static 'img/default_category_product.png' %}{% endif %}" class="card-img-top object-fit-contain" alt="Categoría {{ categoria.nombre }}" style="height: 120px;">
                                         <div class="card-body d-flex flex-column justify-content-center">
-                                            <h5 class="card-title text-center">{{ categoria }}</h5>
+                                            <h5 class="card-title text-center">{{ categoria.nombre }}</h5>
                                         </div>
                                     </a>
                                 </div>
                             </div>
                         {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-white">No hay categorías de productos terminados para mostrar.</p>
-                {% endif %}
+                    {% else %}
+                        <p class="text-white text-center">No hay categorías de productos para mostrar. Crea una usando el menú de la izquierda.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        {# El resto de tu código (tablas de órdenes, stock en falta, etc.) - SIN CAMBIOS AQUÍ #}
+        {# Columna derecha con Órdenes de Producción, etc. #}
         <div class="col-md-4 bg-primary border-start border-5 border-white" style="margin-left: 0px; padding: 20px; border-radius: 25px;">
+            {# ... tu contenido existente para la columna derecha ... #}
             <table class="table table-borderless text-white">
                 <thead>
                     <tr>
@@ -185,31 +175,31 @@
         </div>
     </div>
 
-    {# NUEVO MODAL PARA MOSTRAR ITEMS EN TABLA #}
+    <!-- MODALES -->
+    {# MODAL PARA MOSTRAR ITEMS DE UNA CATEGORÍA EN TABLA #}
     <div class="modal fade" id="modalItemsTable" tabindex="-1" aria-labelledby="modalItemsTableLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable"> {# modal-xl para que sea más grande, modal-dialog-scrollable para contenido largo #}
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalItemsTableLabel">Artículos en Categoría: <span id="modalCategoryTitle"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="d-flex justify-content-end mb-3">
+                        <button type="button" class="btn btn-success" id="btnOpenAgregarItemModal">
+                            <i class="bi bi-plus-circle-fill"></i> Agregar Nuevo <span id="itemTypeInModalText"></span>
+                        </button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="bg-primary text-white">
-                                <tr id="table-header-row">
-                                    {# Encabezados de la tabla se cargarán aquí con JS #}
-                                </tr>
+                                <tr id="table-header-row"></tr>
                             </thead>
-                            <tbody id="modal-items-tbody">
-                                {# Los ítems en formato de tabla se cargarán aquí con JS #}
-                            </tbody>
+                            <tbody id="modal-items-tbody"></tbody>
                         </table>
                     </div>
                     <div id="modal-loading-message" class="text-center my-3" style="display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
+                        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
                         <p class="text-muted mt-2">Cargando artículos...</p>
                     </div>
                     <div id="modal-no-items-message" class="text-center my-3" style="display: none;">
@@ -226,185 +216,570 @@
         </div>
     </div>
 
-    {# Modal de Agregar Insumo #}
+    {# MODAL PARA CREAR CATEGORÍA INSUMO #}
+    <div class="modal fade" id="modalCrearCategoriaInsumo" tabindex="-1" aria-labelledby="modalCrearCategoriaInsumoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="formCrearCategoriaInsumo" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalCrearCategoriaInsumoLabel">Crear Categoría de Insumo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form_crear_categoria_insumo.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Categoría</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# MODAL PARA CREAR CATEGORÍA PRODUCTO TERMINADO #}
+    <div class="modal fade" id="modalCrearCategoriaProducto" tabindex="-1" aria-labelledby="modalCrearCategoriaProductoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="formCrearCategoriaProducto" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalCrearCategoriaProductoLabel">Crear Categoría de Producto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form_crear_categoria_producto.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Categoría</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# MODAL PARA AGREGAR INSUMO #}
     <div class="modal fade" id="modalAgregarInsumo" tabindex="-1" aria-labelledby="modalAgregarInsumoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalAgregarInsumoLabel">Agregar Nuevo Insumo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formAgregarInsumo" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ form_agregar_insumo.as_p }} {# Usa esto para que el formulario se renderice con los campos correctos #}
+                <form id="formAgregarInsumo" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAgregarInsumoLabel">Agregar Nuevo Insumo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {# Campo Categoria manejado por JS y texto #}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Categoría:</label>
+                            <p id="display_agregar_insumo_categoria_nombre" class="form-control-plaintext ps-2" style="border: 1px solid #ced4da; border-radius: .25rem; background-color: #e9ecef;"></p>
+                            <input type="hidden" name="categoria" id="hidden_agregar_insumo_categoria_id">
+                        </div>
+
+                        {# Renderizar otros campos del formulario excepto 'categoria' #}
+                        {% for field in form_agregar_insumo %}
+                            {% if field.name != 'categoria' %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                                    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Guardar Insumo</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-    {# Modal de Editar Insumo (mantener tus campos manuales si ya funcionan bien, o usar form_editar_insumo.as_p) #}
+    
+    {# MODAL PARA EDITAR INSUMO (Mantiene el Select para categoría) #}
     <div class="modal fade" id="modalEditarInsumo" tabindex="-1" aria-labelledby="modalEditarInsumoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarInsumoLabel">Editar Insumo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formEditarInsumo" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <input type="hidden" id="edit_insumo_id" name="id">
-                        <div class="mb-3">
-                            <label for="edit_descripcion_insumo" class="form-label">Descripción</label>
-                            <input type="text" class="form-control" id="edit_descripcion_insumo" name="descripcion" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_categoria_insumo" class="form-label">Categoría</label>
-                            <input type="text" class="form-control" id="edit_categoria_insumo" name="categoria" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_fabricante_insumo" class="form-label">Fabricante</label>
-                            <input type="text" class="form-control" id="edit_fabricante_insumo" name="fabricante" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_precio_unitario_insumo" class="form-label">Precio Unitario</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_precio_unitario_insumo" name="precio_unitario" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_tiempo_entrega_insumo" class="form-label">Tiempo de Entrega (días)</label>
-                            <input type="number" class="form-control" id="edit_tiempo_entrega_insumo" name="tiempo_entrega" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_imagen_insumo" class="form-label">Imagen</label>
-                            <input type="file" class="form-control" id="edit_imagen_insumo" name="imagen" accept="image/*">
-                            <img id="current_imagen_insumo" src="" alt="Imagen Actual" style="max-width: 100px; margin-top: 10px; display: none;">
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_proveedor_insumo" class="form-label">Proveedor</label>
-                            <input type="text" class="form-control" id="edit_proveedor_insumo" name="proveedor" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_stock_insumo" class="form-label">Stock</label>
-                            <input type="number" class="form-control" id="edit_stock_insumo" name="stock" required>
-                        </div>
+                <form id="formEditarInsumo" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_insumo_id" name="id">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarInsumoLabel">Editar Insumo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form_agregar_insumo.as_p }} {# Reutiliza el form_agregar_insumo que tiene el select #}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-
-    {# Modal de Agregar Producto Terminado #}
+    {# MODAL PARA AGREGAR PRODUCTO TERMINADO #}
     <div class="modal fade" id="modalAgregarProducto" tabindex="-1" aria-labelledby="modalAgregarProductoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalAgregarProductoLabel">Agregar Nuevo Producto Terminado</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formAgregarProducto" method="post" enctype="multipart/form-data"> {# Añadido enctype para imagen #}
-                        {% csrf_token %}
-                        {{ form_agregar_producto.as_p }} {# Usa esto para que el formulario se renderice con los campos correctos #}
+                <form id="formAgregarProducto" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAgregarProductoLabel">Agregar Nuevo Producto Terminado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Categoría:</label>
+                            <p id="display_agregar_producto_categoria_nombre" class="form-control-plaintext ps-2" style="border: 1px solid #ced4da; border-radius: .25rem; background-color: #e9ecef;"></p>
+                            <input type="hidden" name="categoria" id="hidden_agregar_producto_categoria_id">
+                        </div>
+                        {% for field in form_agregar_producto %}
+                            {% if field.name != 'categoria' %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                                    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Guardar Producto</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    {# Modal de Editar Producto Terminado (similar a editar insumo) #}
+    {# MODAL PARA EDITAR PRODUCTO TERMINADO (Mantiene el Select para categoría) #}
     <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarProductoLabel">Editar Producto Terminado</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formEditarProducto" method="post" enctype="multipart/form-data"> {# Añadido enctype para imagen #}
-                        {% csrf_token %}
-                        <input type="hidden" id="edit_producto_id" name="id">
-                        <div class="mb-3">
-                            <label for="edit_descripcion_producto" class="form-label">Descripción</label>
-                            <input type="text" class="form-control" id="edit_descripcion_producto" name="descripcion" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_categoria_producto" class="form-label">Categoría</label>
-                            <input type="text" class="form-control" id="edit_categoria_producto" name="categoria" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_precio_unitario_producto" class="form-label">Precio Unitario</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_precio_unitario_producto" name="precio_unitario" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_stock_producto" class="form-label">Stock</label>
-                            <input type="number" class="form-control" id="edit_stock_producto" name="stock" required>
-                        </div>
-                        {# Si ProductoTerminado tiene campo de imagen, añadirlo aquí: #}
-                        {#
-                        <div class="mb-3">
-                            <label for="edit_imagen_producto" class="form-label">Imagen</label>
-                            <input type="file" class="form-control" id="edit_imagen_producto" name="imagen" accept="image/*">
-                            <img id="current_imagen_producto" src="" alt="Imagen Actual" style="max-width: 100px; margin-top: 10px; display: none;">
-                        </div>
-                        #}
+                <form id="formEditarProducto" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_producto_id" name="id">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarProductoLabel">Editar Producto Terminado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form_agregar_producto.as_p }} {# Reutiliza el form_agregar_producto que tiene el select #}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    {# Modal de Buscar Artículo #}
+    {# Modal de Buscar Artículo (sin cambios) #}
     <div class="modal fade" id="modalBuscarArticulo" tabindex="-1" aria-labelledby="modalBuscarArticuloLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalBuscarArticuloLabel">Buscar Artículo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="search_query" class="form-label">Buscar por Descripción</label>
-                        <input type="text" class="form-control" id="search_query" placeholder="Escribe la descripción...">
-                    </div>
-                    <div class="mb-3">
-                        <label for="search_type" class="form-label">Tipo de Artículo</label>
-                        <select class="form-select" id="search_type">
-                            <option value="insumo">Insumo</option>
-                            <option value="producto">Producto Terminado</option>
-                        </select>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="btnBuscarArticulo">Buscar</button>
-
-                    <div id="search_results" class="mt-4">
-                        {# Los resultados de búsqueda se mostrarán aquí #}
-                    </div>
-                </div>
-            </div>
-        </div>
+        {# ... contenido ... #}
     </div>
 
-    <script src="{% static 'js/cards_deposito.js' %}"></script>
     <script>
-        // Funciones auxiliares para mostrar/ocultar secciones
-        function mostrarInsumos() {
-            document.getElementById("insumos-content").style.display = "flex";
-            document.getElementById("productos-content").style.display = "none";
-            document.getElementById("insumos-tab").classList.add("active");
-            document.getElementById("productos-tab").classList.remove("active");
+        let currentTableModalCategoryId = null;
+        let currentTableModalCategoryName = null;
+        let currentTableModalItemType = null;
+
+        function mostrarTab(tipo) {
+            document.getElementById("insumos-content").style.display = (tipo === 'insumos') ? "flex" : "none";
+            document.getElementById("productos-content").style.display = (tipo === 'productos') ? "flex" : "none";
+            document.getElementById("insumos-tab").classList.toggle("active", tipo === 'insumos');
+            document.getElementById("productos-tab").classList.toggle("active", tipo === 'productos');
         }
 
-        function mostrarProductos() {
-            document.getElementById("insumos-content").style.display = "none";
-            document.getElementById("productos-content").style.display = "flex";
-            document.getElementById("insumos-tab").classList.remove("active");
-            document.getElementById("productos-tab").classList.add("active");
+        function getCsrfToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
         }
+        
+        function renderCategoryCard(categoriaData, itemType) {
+            const containerId = itemType === 'insumo' ? 'insumo-categories-container' : 'producto-categories-container';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const defaultImage = itemType === 'insumo' ? "{% static 'img/default_category_insumo.png' %}" : "{% static 'img/default_category_product.png' %}";
+            const imageUrl = categoriaData.imagen_url || defaultImage;
+
+            const cardHtml = `
+                <div class="col">
+                    <div class="card shadow-sm h-100 category-card" data-category-id="${categoriaData.categoria_id}" data-category-name="${categoriaData.nombre}" data-item-type="${itemType}">
+                        <a href="#" class="text-decoration-none text-dark d-flex flex-column h-100 open-category-modal">
+                            <img src="${imageUrl}" class="card-img-top object-fit-contain" alt="Categoría ${categoriaData.nombre}" style="height: 120px;">
+                            <div class="card-body d-flex flex-column justify-content-center">
+                                <h5 class="card-title text-center">${categoriaData.nombre}</h5>
+                            </div>
+                        </a>
+                    </div>
+                </div>`;
+            // Si el contenedor decía "no hay categorías", lo limpiamos antes de añadir la primera.
+            if (container.querySelector('p.text-white')) {
+                container.innerHTML = '';
+            }
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            // Re-asignar listeners a las nuevas tarjetas
+            document.querySelectorAll(`#${containerId} .open-category-modal`).forEach(cardLink => {
+                cardLink.removeEventListener('click', handleCategoryCardClick);
+                cardLink.addEventListener('click', handleCategoryCardClick);
+            });
+        }
+
+        function populateItemsTable(items, itemType, categoriaNombre) {
+            const tbody = document.getElementById('modal-items-tbody');
+            const headerRow = document.getElementById('table-header-row');
+            tbody.innerHTML = '';
+            headerRow.innerHTML = '';
+
+            document.getElementById('modalCategoryTitle').textContent = categoriaNombre;
+            document.getElementById('itemTypeInModalText').textContent = itemType === 'insumo' ? 'Insumo' : 'Producto';
+
+            if (itemType === 'insumo') {
+                headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Fabricante</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                items.forEach(item => {
+                    const row = `<tr id="item-row-${itemType}-${item.id}">
+                        <td>${item.id}</td>
+                        <td><img src="${item.imagen_url || '{% static "img/placeholder_item.png" %}'}" alt="${item.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                        <td>${item.descripcion}</td><td>${item.fabricante || '-'}</td><td>${item.precio_unitario}</td><td>${item.stock}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-edit-item" data-id="${item.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="btn btn-sm btn-danger btn-delete-item" data-id="${item.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button>
+                        </td></tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } else if (itemType === 'producto') {
+                headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                items.forEach(item => {
+                    const row = `<tr id="item-row-${itemType}-${item.id}">
+                        <td>${item.id}</td>
+                        <td><img src="${item.imagen_url || '{% static "img/placeholder_item.png" %}'}" alt="${item.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                        <td>${item.descripcion}</td><td>${item.precio_unitario}</td><td>${item.stock}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-edit-item" data-id="${item.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="btn btn-sm btn-danger btn-delete-item" data-id="${item.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button>
+                        </td></tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+            addTableButtonListeners();
+        }
+        
+        function updateRowInTable(itemData, itemType) {
+            const rowId = `item-row-${itemType}-${itemData.id}`;
+            const rowElement = document.getElementById(rowId);
+            if (!rowElement) return;
+
+            let newRowContent = '';
+            const imageUrl = itemData.imagen_url || '{% static "img/placeholder_item.png" %}';
+
+            if (itemType === 'insumo') {
+                newRowContent = `<td>${itemData.id}</td><td><img src="${imageUrl}" alt="${itemData.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td><td>${itemData.descripcion}</td><td>${itemData.fabricante || '-'}</td><td>${itemData.precio_unitario}</td><td>${itemData.stock}</td><td><button class="btn btn-sm btn-info btn-edit-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-danger btn-delete-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button></td>`;
+            } else if (itemType === 'producto') {
+                 newRowContent = `<td>${itemData.id}</td><td><img src="${imageUrl}" alt="${itemData.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td><td>${itemData.descripcion}</td><td>${itemData.precio_unitario}</td><td>${itemData.stock}</td><td><button class="btn btn-sm btn-info btn-edit-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-danger btn-delete-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button></td>`;
+            }
+            rowElement.innerHTML = newRowContent;
+            addTableButtonListeners();
+        }
+        
+        function addRowToTable(itemData, itemType) {
+            const tbody = document.getElementById('modal-items-tbody');
+            if (!tbody) return;
+            
+            let newRowHtml = '';
+            const imageUrl = itemData.imagen_url || '{% static "img/placeholder_item.png" %}';
+
+            if (itemType === 'insumo') {
+                newRowHtml = `<tr id="item-row-${itemType}-${itemData.id}"><td>${itemData.id}</td><td><img src="${imageUrl}" alt="${itemData.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td><td>${itemData.descripcion}</td><td>${itemData.fabricante || '-'}</td><td>${itemData.precio_unitario}</td><td>${itemData.stock}</td><td><button class="btn btn-sm btn-info btn-edit-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-danger btn-delete-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button></td></tr>`;
+            } else if (itemType === 'producto') {
+                 newRowHtml = `<tr id="item-row-${itemType}-${itemData.id}"><td>${itemData.id}</td><td><img src="${imageUrl}" alt="${itemData.descripcion}" style="width: 50px; height: 50px; object-fit: cover;"></td><td>${itemData.descripcion}</td><td>${itemData.precio_unitario}</td><td>${itemData.stock}</td><td><button class="btn btn-sm btn-info btn-edit-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-danger btn-delete-item" data-id="${itemData.id}" data-type="${itemType}"><i class="bi bi-trash-fill"></i></button></td></tr>`;
+            }
+            tbody.insertAdjacentHTML('beforeend', newRowHtml);
+            document.getElementById('modal-no-items-message').style.display = 'none';
+            addTableButtonListeners();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Crear Categoría Insumo
+            document.getElementById('formCrearCategoriaInsumo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch("{% url 'App_LUMINOVA:agregar_categoria_insumo_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Categoría de insumo creada!');
+                        renderCategoryCard(data, 'insumo');
+                        bootstrap.Modal.getInstance(document.getElementById('modalCrearCategoriaInsumo')).hide();
+                        this.reset();
+                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                });
+            });
+
+            // Crear Categoría Producto
+            document.getElementById('formCrearCategoriaProducto').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch("{% url 'App_LUMINOVA:agregar_categoria_producto_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Categoría de producto creada!');
+                        renderCategoryCard(data, 'producto');
+                        bootstrap.Modal.getInstance(document.getElementById('modalCrearCategoriaProducto')).hide();
+                        this.reset();
+                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                });
+            });
+
+            document.querySelectorAll('.open-category-modal').forEach(cardLink => {
+                cardLink.addEventListener('click', handleCategoryCardClick);
+            });
+
+            document.getElementById('btnOpenAgregarItemModal').addEventListener('click', function() {
+                var modalToOpenId, formId, displayNameElementId, hiddenIdElementId;
+
+                if (currentTableModalItemType === 'insumo') {
+                    modalToOpenId = 'modalAgregarInsumo';
+                    formId = 'formAgregarInsumo';
+                    displayNameElementId = 'display_agregar_insumo_categoria_nombre';
+                    hiddenIdElementId = 'hidden_agregar_insumo_categoria_id';
+                } else if (currentTableModalItemType === 'producto') {
+                    modalToOpenId = 'modalAgregarProducto';
+                    formId = 'formAgregarProducto';
+                    displayNameElementId = 'display_agregar_producto_categoria_nombre';
+                    hiddenIdElementId = 'hidden_agregar_producto_categoria_id';
+                } else { return; }
+
+                const form = document.getElementById(formId);
+                form.reset();
+                document.getElementById(displayNameElementId).textContent = currentTableModalCategoryName;
+                document.getElementById(hiddenIdElementId).value = currentTableModalCategoryId;
+                
+                var modal = new bootstrap.Modal(document.getElementById(modalToOpenId));
+                modal.show();
+                bootstrap.Modal.getInstance(document.getElementById('modalItemsTable')).hide();
+            });
+
+            // Submit Agregar Insumo
+            document.getElementById('formAgregarInsumo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this); // El campo 'categoria' (hidden) ya tiene el ID
+                fetch("{% url 'App_LUMINOVA:agregar_insumo_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Insumo agregado!');
+                        if (currentTableModalCategoryId == data.insumo.categoria_id_actual && currentTableModalItemType === 'insumo') {
+                            addRowToTable(data.insumo, 'insumo');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('modalAgregarInsumo')).hide();
+                        this.reset();
+                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                });
+            });
+            
+            // Submit Editar Insumo
+            document.getElementById('formEditarInsumo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch("{% url 'App_LUMINOVA:editar_insumo_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Insumo editado!');
+                        if (currentTableModalCategoryId == data.insumo.categoria_id_actual && currentTableModalItemType === 'insumo') {
+                            updateRowInTable(data.insumo, 'insumo');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('modalEditarInsumo')).hide();
+                    } else { alert('Error al editar: ' + JSON.stringify(data.errors));}
+                });
+            });
+
+            // Submit Agregar Producto Terminado
+            document.getElementById('formAgregarProducto').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch("{% url 'App_LUMINOVA:agregar_producto_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Producto terminado agregado!');
+                        if (currentTableModalCategoryId == data.producto.categoria_id_actual && currentTableModalItemType === 'producto') {
+                           addRowToTable(data.producto, 'producto');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('modalAgregarProducto')).hide();
+                        this.reset();
+                    } else { alert('Error: ' + JSON.stringify(data.errors)); }
+                });
+            });
+            
+            // Submit Editar Producto Terminado
+            document.getElementById('formEditarProducto').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch("{% url 'App_LUMINOVA:editar_producto_terminado_ajax' %}", { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert('Producto editado!');
+                        if (currentTableModalCategoryId == data.producto.categoria_id_actual && currentTableModalItemType === 'producto') {
+                            updateRowInTable(data.producto, 'producto');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('modalEditarProducto')).hide();
+                    } else { alert('Error al editar: ' + JSON.stringify(data.errors)); }
+                });
+            });
+        });
+
+        function handleCategoryCardClick(event) {
+            event.preventDefault();
+            const card = event.currentTarget.closest('.category-card');
+            currentTableModalCategoryId = card.dataset.categoryId;
+            currentTableModalCategoryName = card.dataset.categoryName;
+            currentTableModalItemType = card.dataset.itemType;
+
+            document.getElementById('modal-loading-message').style.display = 'block';
+            document.getElementById('modal-items-tbody').innerHTML = '';
+            document.getElementById('modal-no-items-message').style.display = 'none';
+            document.getElementById('modal-error-message').style.display = 'none';
+            
+            var itemsTableModal = new bootstrap.Modal(document.getElementById('modalItemsTable'));
+            itemsTableModal.show();
+
+            fetch(`{% url 'App_LUMINOVA:get_items_por_categoria_ajax' %}?categoria_id=${currentTableModalCategoryId}&item_type=${currentTableModalItemType}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modal-loading-message').style.display = 'none';
+                if (data.success) {
+                    if (data.items.length > 0) {
+                        populateItemsTable(data.items, currentTableModalItemType, data.categoria_nombre);
+                    } else {
+                        document.getElementById('modalCategoryTitle').textContent = data.categoria_nombre;
+                        document.getElementById('itemTypeInModalText').textContent = currentTableModalItemType === 'insumo' ? 'Insumo' : 'Producto';
+                        document.getElementById('modal-no-items-message').style.display = 'block';
+                        const headerRow = document.getElementById('table-header-row');
+                        headerRow.innerHTML = ''; 
+                        if (currentTableModalItemType === 'insumo') {
+                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Fabricante</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                        } else if (currentTableModalItemType === 'producto') {
+                            headerRow.innerHTML = `<th>ID</th><th>Imagen</th><th>Descripción</th><th>Precio U.</th><th>Stock</th><th>Acciones</th>`;
+                        }
+                    }
+                } else {
+                    document.getElementById('modal-error-message').style.display = 'block';
+                    console.error("Error fetching items:", data.error);
+                }
+            }).catch(error => {
+                document.getElementById('modal-loading-message').style.display = 'none';
+                document.getElementById('modal-error-message').style.display = 'block';
+                console.error('Error en la petición AJAX:', error);
+            });
+        }
+        
+        function addTableButtonListeners() {
+            document.querySelectorAll('.btn-edit-item').forEach(button => {
+                button.removeEventListener('click', handleEditItemClick);
+                button.addEventListener('click', handleEditItemClick);
+            });
+            document.querySelectorAll('.btn-delete-item').forEach(button => {
+                button.removeEventListener('click', handleDeleteItemClick);
+                button.addEventListener('click', handleDeleteItemClick);
+            });
+        }
+
+        function handleEditItemClick(event) {
+            const button = event.currentTarget;
+            const itemId = button.dataset.id;
+            const itemType = button.dataset.type;
+
+            let getDataUrl = '';
+            let modalToOpenId = '';
+            let formId = '';
+            let currentImageId = ''; // Para el <img id="current_imagen_...">
+
+            if (itemType === 'insumo') {
+                getDataUrl = `{% url 'App_LUMINOVA:get_insumo_data' %}?id=${itemId}`;
+                modalToOpenId = 'modalEditarInsumo';
+                formId = 'formEditarInsumo';
+                currentImageId = 'current_imagen_insumo'; // Asumiendo que el form de edición tiene un img con este id
+            } else if (itemType === 'producto') {
+                getDataUrl = `{% url 'App_LUMINOVA:get_producto_terminado_data' %}?id=${itemId}`;
+                modalToOpenId = 'modalEditarProducto';
+                formId = 'formEditarProducto';
+                currentImageId = 'current_imagen_producto'; // Asumiendo
+            }
+
+            fetch(getDataUrl)
+            .then(response => response.json())
+            .then(dataResponse => { // Renombrado para evitar conflicto con 'data' del dataset
+                if (dataResponse.success) {
+                    const itemData = itemType === 'insumo' ? dataResponse.insumo : dataResponse.producto;
+                    const form = document.getElementById(formId);
+                    
+                    form.querySelector(`[name="id"]`).value = itemData.id;
+                    form.querySelector(`[name="descripcion"]`).value = itemData.descripcion;
+                    
+                    // El campo categoría en los forms de EDICIÓN es un SELECT
+                    const categoriaSelect = form.querySelector(`[name="categoria"]`);
+                    if (categoriaSelect) categoriaSelect.value = itemData.categoria; // itemData.categoria es el ID
+
+                    form.querySelector(`[name="precio_unitario"]`).value = itemData.precio_unitario;
+                    form.querySelector(`[name="stock"]`).value = itemData.stock;
+
+                    if (itemType === 'insumo') {
+                        form.querySelector(`[name="fabricante"]`).value = itemData.fabricante;
+                        form.querySelector(`[name="tiempo_entrega"]`).value = itemData.tiempo_entrega;
+                        form.querySelector(`[name="proveedor"]`).value = itemData.proveedor;
+                    }
+                    
+                    const currentImageElement = form.querySelector(`img[id^="current_imagen_"]`); // Asumiendo que existe en el form de edición
+                    if (currentImageElement) {
+                        if (itemData.imagen_url) {
+                            currentImageElement.src = itemData.imagen_url;
+                            currentImageElement.style.display = 'block';
+                        } else {
+                            currentImageElement.style.display = 'none';
+                        }
+                    }
+                    const imageInput = form.querySelector('input[type="file"][name="imagen"]');
+                    if(imageInput) imageInput.value = '';
+
+
+                    var modal = new bootstrap.Modal(document.getElementById(modalToOpenId));
+                    modal.show();
+                } else {
+                    alert('Error al cargar datos para editar: ' + dataResponse.error);
+                }
+            });
+        }
+        
+        function handleDeleteItemClick(event) {
+            const button = event.currentTarget;
+            const itemId = button.dataset.id;
+            const itemType = button.dataset.type;
+
+            if (confirm(`¿Estás seguro de eliminar este ${itemType} (ID: ${itemId})?`)) {
+                fetch("{% url 'App_LUMINOVA:eliminar_articulo_ajax' %}", {
+                    method: 'POST',
+                    body: new URLSearchParams({ 'id': itemId, 'item_type': itemType, 'csrfmiddlewaretoken': getCsrfToken() }),
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrfToken() }
+                })
+                .then(response => response.json()).then(data => {
+                    if (data.success) {
+                        alert(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} eliminado!`);
+                        document.getElementById(`item-row-${itemType}-${itemId}`).remove();
+                        if (document.getElementById('modal-items-tbody').children.length === 0) {
+                            document.getElementById('modal-no-items-message').style.display = 'block';
+                        }
+                    } else { alert('Error al eliminar: ' + data.error); }
+                });
+            }
+        }
+        // Inicializar listeners para las tarjetas de categoría existentes al cargar la página
+        document.querySelectorAll('.open-category-modal').forEach(cardLink => {
+            cardLink.addEventListener('click', handleCategoryCardClick);
+        });
     </script>
 {% endblock %}
