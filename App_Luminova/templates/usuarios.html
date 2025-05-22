@@ -196,3 +196,68 @@
         </div>
     {% endfor %}
 {% endblock %}
+
+{% block scripts %}
+    <script>
+        document.getElementById('crearUsuarioForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch("{% url 'App_LUMINOVA:crear_usuario' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest' // Importante para que la vista sepa que es AJAX
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Usuario creado exitosamente!');
+            // Cerrar modal
+            var modal = bootstrap.Modal.getInstance(document.getElementById('crearUsuarioModal'));
+            modal.hide();
+            // Agregar fila a la tabla (o recargar la página/tabla)
+            const newUser = data.user;
+            const tableBody = document.querySelector('.table tbody');
+            const newRow = `
+                <tr>
+                    <td>${newUser.id}</td>
+                    <td>${newUser.username}</td>
+                    <td>${newUser.email}</td>
+                    <td>${newUser.rol}</td>
+                    <td>${newUser.estado}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editarUsuarioModal${newUser.id}">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarUsuarioModal${newUser.id}">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                        <!-- Aquí necesitarías generar también los modales de editar/eliminar para este nuevo usuario, o recargar la página -->
+                    </td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', newRow);
+            // Idealmente, después de agregar la fila, también deberías crear dinámicamente
+            // los modales de editar y eliminar para este nuevo usuario, o simplemente
+            // hacer un window.location.reload(); para recargar la página y que Django los renderice.
+            window.location.reload(); // Opción más simple por ahora
+        } else {
+            // Mostrar errores en el modal
+            let errorMessages = '';
+            for (const field in data.errors) {
+                errorMessages += `${field}: ${data.errors[field].join(', ')}\n`;
+            }
+            alert('Error al crear usuario:\n' + errorMessages);
+        }
+    })
+    .catch(error => {
+        console.error('Error en AJAX:', error);
+        alert('Ocurrió un error de conexión.');
+    });
+});
+    </script>
+{% endblock %}

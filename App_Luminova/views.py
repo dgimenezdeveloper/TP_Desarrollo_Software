@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt # Para AJAX, pero considera csrf_protect si es posible
 from django.views.decorators.http import require_POST, require_GET
+from django.contrib.auth.hashers import make_password # Para hashear contraseñas
 # from django.db.models import Count # No se usa activamente en la vista deposito ahora
 
 # Importar TODOS los formularios necesarios
@@ -110,7 +111,7 @@ def lista_usuarios(request):
     usuarios = User.objects.all().prefetch_related('groups') # prefetch groups para eficiencia
     return render(request, 'usuarios.html', {'usuarios': usuarios})
 
-@login_required
+""" @login_required
 @require_POST # Es buena práctica restringir a POST para acciones que modifican datos
 def crear_usuario(request):
     # Esta vista debería manejar la creación completa, incluyendo la asignación de rol (grupo) y estado
@@ -164,7 +165,7 @@ def crear_usuario(request):
 
     # Si no es POST, simplemente redirige (o muestra un formulario GET si lo tienes)
     return redirect('App_LUMINOVA:lista_usuarios')
-
+"""
 @login_required
 def dashboard_view(request):
     return render(request, 'dashboard.html')
@@ -196,59 +197,83 @@ def lista_usuarios(request):
     return render(request, 'usuarios.html', {'usuarios': usuarios})
 
 @login_required
-@require_POST # Es buena práctica restringir a POST para acciones que modifican datos
+# @require_POST # Descomentar si es solo AJAX POST
 def crear_usuario(request):
-    # Esta vista debería manejar la creación completa, incluyendo la asignación de rol (grupo) y estado
-    # Aquí un ejemplo simplificado que asume que el formulario maneja la creación básica.
-    # Necesitarías un formulario más completo o lógica adicional aquí.
     if request.method == 'POST':
-        # Aquí deberías usar un formulario personalizado, no UserCreationForm directamente
-        # para manejar el rol y el estado. Por ahora, mantenemos tu lógica original
-        # pero ten en cuenta que UserCreationForm no maneja grupos ni is_active directamente.
-        # username = request.POST.get('username')
-        # email = request.POST.get('email')
-        # password = make_password(request.POST.get('password')) # ¡DEBES HASHEAR LA CONTRASEÑA!
-        # rol_name = request.POST.get('rol')
-        # estado_str = request.POST.get('estado')
-        # is_active = estado_str == 'Activo'
+        # ESTE FORMULARIO ES MUY BÁSICO. Deberías crear un CustomUserCreationForm
+        # que incluya campos para email, rol, y estado.
+        # Por ahora, tomaremos los datos directamente del POST y validaremos manualmente.
 
-        # user = User.objects.create_user(username=username, email=email, password=password, is_active=is_active)
-        # if rol_name:
-        #     group = Group.objects.get(name=rol_name)
-        #     user.groups.add(group)
-        # messages.success(request, f"Usuario {username} creado exitosamente.")
-        # return redirect('App_LUMINOVA:lista_usuarios')
-        #
-        # MANTENIENDO TU LÓGICA ORIGINAL POR AHORA:
-        form = UserCreationForm(request.POST) # UserCreationForm no maneja roles/grupos ni estado is_active
-        if form.is_valid():
-            user = form.save() # Guarda el usuario básico
-            # Lógica adicional para rol y estado
-            rol_name = request.POST.get('rol')
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        rol_name = request.POST.get('rol')
+        estado_str = request.POST.get('estado')
+        password = request.POST.get('password', 'luminova123') # Deberías tener un campo de contraseña en el modal
+        
+        errors = {}
+        if not username: errors['username'] = 'Este campo es requerido.'
+        if User.objects.filter(username=username).exists(): errors['username'] = 'Este nombre de usuario ya existe.'
+        if not email: errors['email'] = 'Este campo es requerido.'
+        # Añadir más validaciones (ej. formato de email)
+
+        if errors:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest': # Si es AJAX
+                return JsonResponse({'success': False, 'errors': errors})
+            else: # Si es un POST normal
+                for field, error_list in errors.items():
+                    for err in error_list if isinstance(error_list, list) else [error_list]:
+                         messages.error(request, f"Error en {field}: {err}")
+                return redirect('App_LUMINOVA:lista_usuarios')
+
+
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password # ¡DEBE SER HASHEADA! Usa make_password si no usas un form de Django que lo haga.
+            )
+            user.is_active = (estado_str == 'Activo')
+
             if rol_name:
                 try:
                     group = Group.objects.get(name=rol_name)
                     user.groups.add(group)
                 except Group.DoesNotExist:
-                    messages.error(request, f"El rol '{rol_name}' no existe.")
+                    # Manejar el caso de que el grupo no exista, quizás con un error.
+                    user.delete() # Rollback de la creación del usuario
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({'success': False, 'errors': {'rol': [f"El rol '{rol_name}' no existe."]}})
+                    else:
+                        messages.error(request, f"El rol '{rol_name}' no existe.")
+                        return redirect('App_LUMINOVA:lista_usuarios')
+            
+            user.save()
 
-            estado_str = request.POST.get('estado')
-            user.is_active = (estado_str == 'Activo')
-            user.save() # Guardar cambios de rol y estado
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True, 
+                    'user': { # Devuelve los datos del usuario para añadirlo a la tabla dinámicamente
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'rol': rol_name if rol_name else "Sin Rol",
+                        'estado': "Activo" if user.is_active else "Inactivo"
+                    }
+                })
+            else:
+                messages.success(request, f"Usuario '{user.username}' creado exitosamente.")
+                return redirect('App_LUMINOVA:lista_usuarios')
 
-            messages.success(request, f"Usuario '{user.username}' creado exitosamente.")
-            return redirect('App_LUMINOVA:lista_usuarios')
-        else:
-            # Si el formulario no es válido, renderiza la plantilla de usuarios con errores
-            # o una plantilla específica de creación con el formulario y sus errores.
-            # Para simplificar, redirigimos con un mensaje de error.
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"Error en {field}: {error}")
-            return redirect('App_LUMINOVA:lista_usuarios') # O renderizar un form_crear_usuario.html
-
-    # Si no es POST, simplemente redirige (o muestra un formulario GET si lo tienes)
-    return redirect('App_LUMINOVA:lista_usuarios')
+        except Exception as e:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}})
+            else:
+                messages.error(request, f"Error al crear usuario: {str(e)}")
+                return redirect('App_LUMINOVA:lista_usuarios')
+    
+    # Si es GET, podrías renderizar un formulario o simplemente no hacer nada si el modal se maneja en la misma página.
+    # Por ahora, si no es POST, no hacemos nada especial, asumiendo que el modal está en lista_usuarios.html
+    return redirect('App_LUMINOVA:lista_usuarios') # O renderizar la página con el modal
 
 @login_required
 @require_POST # Es buena práctica
