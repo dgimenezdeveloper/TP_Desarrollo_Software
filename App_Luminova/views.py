@@ -1,10 +1,10 @@
 # App_LUMINOVA/views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm # Mantén esto para tus vistas de usuario
 from django.contrib.auth.decorators import login_required # Mantén login_required
-
+from django.db import transaction
 from .models import (
     Insumo, ProductoTerminado, CategoriaInsumo, CategoriaProductoTerminado, # Asegúrate que CategoriaProductoTerminado esté aquí
     AuditoriaAcceso, Orden, Proveedor, Cliente, Factura, RolDescripcion
@@ -23,7 +23,8 @@ from .forms import (
     InsumoForm,
     ProductoTerminadoForm,
     CategoriaInsumoForm,          # NUEVO
-    CategoriaProductoTerminadoForm # NUEVO
+    CategoriaProductoTerminadoForm, # NUEVO
+    RolForm, PermisosRolForm
 )
 
 
@@ -596,6 +597,176 @@ def eliminar_articulo_ajax(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@login_required
+@require_POST
+@csrf_exempt # Considera csrf_protect y enviar token con JS
+def crear_rol_ajax(request):
+    form = RolForm(request.POST)
+    if form.is_valid():
+        nombre_rol = form.cleaned_data['nombre']
+        descripcion_rol = form.cleaned_data['descripcion']
+        try:
+            with transaction.atomic(): # Para asegurar que ambas creaciones ocurran o ninguna
+                nuevo_grupo = Group.objects.create(name=nombre_rol)
+                if descripcion_rol:
+                    RolDescripcion.objects.create(group=nuevo_grupo, descripcion=descripcion_rol)
+                
+                return JsonResponse({
+                    'success': True,
+                    'rol': {
+                        'id': nuevo_grupo.id,
+                        'nombre': nuevo_grupo.name,
+                        'descripcion': descripcion_rol
+                    }
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}})
+    else:
+        return JsonResponse({'success': False, 'errors': form.errors})
+
+@login_required
+@require_GET
+def get_rol_data_ajax(request):
+    rol_id = request.GET.get('rol_id')
+    try:
+        grupo = Group.objects.get(id=rol_id)
+        descripcion_extendida = ""
+        if hasattr(grupo, 'descripcion_extendida') and grupo.descripcion_extendida:
+            descripcion_extendida = grupo.descripcion_extendida.descripcion
+        
+        return JsonResponse({
+            'success': True,
+            'rol': {
+                'id': grupo.id,
+                'nombre': grupo.name,
+                'descripcion': descripcion_extendida
+            }
+        })
+    except Group.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Rol no encontrado.'}, status=404)
+
+@login_required
+@require_POST
+@csrf_exempt # Considera csrf_protect
+def editar_rol_ajax(request):
+    rol_id = request.POST.get('rol_id') # rol_id viene del form
+    try:
+        grupo_a_editar = Group.objects.get(id=rol_id)
+    except Group.DoesNotExist:
+        return JsonResponse({'success': False, 'errors': {'__all__': ['Rol no encontrado.']}}, status=404)
+
+    form = RolForm(request.POST, initial={'rol_id': rol_id}) # Pasar rol_id para validación de unicidad
+    
+    if form.is_valid():
+        nombre_rol = form.cleaned_data['nombre']
+        descripcion_rol = form.cleaned_data['descripcion']
+        try:
+            with transaction.atomic():
+                grupo_a_editar.name = nombre_rol
+                grupo_a_editar.save()
+
+                desc_obj, created = RolDescripcion.objects.get_or_create(group=grupo_a_editar)
+                desc_obj.descripcion = descripcion_rol
+                desc_obj.save()
+            
+            return JsonResponse({
+                'success': True,
+                'rol': {
+                    'id': grupo_a_editar.id,
+                    'nombre': grupo_a_editar.name,
+                    'descripcion': descripcion_rol
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}})
+    else:
+        return JsonResponse({'success': False, 'errors': form.errors})
+
+
+@login_required
+@require_POST # Debería ser POST para una acción de eliminación
+@csrf_exempt # Considera csrf_protect
+def eliminar_rol_ajax(request):
+    import json # Para parsear el body si es JSON
+    try:
+        data = json.loads(request.body)
+        rol_id = data.get('rol_id')
+        grupo = Group.objects.get(id=rol_id)
+        
+        # Opcional: Verificar si hay usuarios en este grupo antes de eliminar
+        if grupo.user_set.exists():
+            return JsonResponse({'success': False, 'error': 'No se puede eliminar el rol porque tiene usuarios asignados.'}, status=400)
+            
+        grupo.delete() # RolDescripcion se borrará en cascada
+        return JsonResponse({'success': True})
+    except Group.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Rol no encontrado.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON inválido.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_GET
+def get_permisos_rol_ajax(request):
+    rol_id = request.GET.get('rol_id')
+    try:
+        rol = Group.objects.get(id=rol_id)
+        permisos_del_rol_ids = list(rol.permissions.values_list('id', flat=True))
+        
+        todos_los_permisos = Permission.objects.select_related('content_type').all()
+        permisos_data = []
+        for perm in todos_los_permisos:
+            permisos_data.append({
+                'id': perm.id,
+                'name': perm.name, # Nombre legible
+                'codename': perm.codename, # Codename (ej. add_user)
+                'content_type_app_label': perm.content_type.app_label, # Nombre de la app (ej. auth, App_Luminova)
+                'content_type_model': perm.content_type.model # Nombre del modelo (ej. user, insumo)
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'todos_los_permisos': permisos_data,
+            'permisos_del_rol': permisos_del_rol_ids
+        })
+    except Group.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Rol no encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_POST
+@csrf_exempt # Considera csrf_protect
+def actualizar_permisos_rol_ajax(request):
+    import json
+    try:
+        data = json.loads(request.body)
+        rol_id = data.get('rol_id')
+        permisos_ids_str = data.get('permisos_ids', []) # Lista de IDs como strings
+        permisos_ids = [int(pid) for pid in permisos_ids_str]
+
+
+        rol = Group.objects.get(id=rol_id)
+        
+        # Actualizar permisos
+        rol.permissions.set(permisos_ids) # set() maneja agregar y quitar
+        
+        return JsonResponse({'success': True, 'message': 'Permisos actualizados.'})
+    except Group.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Rol no encontrado.'}, status=404)
+    except Permission.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Uno o más permisos no son válidos.'}, status=400)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'IDs de permisos inválidos.'}, status=400)
+    except json.JSONDecodeError:
+         return JsonResponse({'success': False, 'error': 'Datos JSON inválidos.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# --- Rutas y vistas para botones de sidebar de Compras y Producción (mantener si ya existen) ---
 def desglose(req):
     return render(req, "desglose.html")
 

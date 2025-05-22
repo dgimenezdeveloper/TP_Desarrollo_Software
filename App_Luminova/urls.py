@@ -22,6 +22,15 @@ urlpatterns = [
     path('dashboard/', dashboard_view, name='dashboard'),
     
     path('roles-permisos/', views.roles_permisos, name='roles_permisos'),
+    
+    # URLs AJAX para Roles y Permisos
+    path('ajax/crear-rol/', views.crear_rol_ajax, name='crear_rol_ajax'),
+    path('ajax/get-rol-data/', views.get_rol_data_ajax, name='get_rol_data_ajax'),
+    path('ajax/editar-rol/', views.editar_rol_ajax, name='editar_rol_ajax'),
+    path('ajax/eliminar-rol/', views.eliminar_rol_ajax, name='eliminar_rol_ajax'),
+    path('ajax/get-permisos-rol/', views.get_permisos_rol_ajax, name='get_permisos_rol_ajax'),
+    path('ajax/actualizar-permisos-rol/', views.actualizar_permisos_rol_ajax, name='actualizar_permisos_rol_ajax'),
+    
     path('auditoria/', views.auditoria, name='auditoria'),
 
     path('usuarios/', lista_usuarios, name='lista_usuarios'),
