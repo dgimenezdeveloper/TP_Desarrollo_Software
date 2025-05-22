@@ -22,20 +22,20 @@ from django.contrib.auth.hashers import make_password # Para hashear contraseña
 from .forms import (
     InsumoForm,
     ProductoTerminadoForm,
-    CategoriaInsumoForm,          # NUEVO
-    CategoriaProductoTerminadoForm, # NUEVO
+    CategoriaInsumoForm,         
+    CategoriaProductoTerminadoForm,
     RolForm, PermisosRolForm
 )
 
 
 def compras(req):
-    return render(req, "compras.html")
+    return render(req, "compras/compras.html")
 
 def produccion(req):
-    return render(req, "produccion.html")
+    return render(req, "produccion/produccion.html")
 
 def ventas(req):
-    return render(req, "ventas.html")
+    return render(req, "ventas/ventas.html")
 
 @login_required
 def deposito(req):
@@ -44,22 +44,22 @@ def deposito(req):
 
     form_agregar_insumo = InsumoForm()
     form_agregar_producto = ProductoTerminadoForm()
-    form_crear_categoria_insumo = CategoriaInsumoForm() # NUEVO
-    form_crear_categoria_producto = CategoriaProductoTerminadoForm() # NUEVO
+    form_crear_categoria_insumo = CategoriaInsumoForm() 
+    form_crear_categoria_producto = CategoriaProductoTerminadoForm() 
 
     context = {
         "categorias_insumos": categorias_insumos,
-        "categorias_productos_terminados": categorias_productos, # Cambiado a objetos de CategoriaProductoTerminado
+        "categorias_productos_terminados": categorias_productos, 
         "form_agregar_insumo": form_agregar_insumo,
         "form_agregar_producto": form_agregar_producto,
-        "form_crear_categoria_insumo": form_crear_categoria_insumo, # NUEVO
-        "form_crear_categoria_producto": form_crear_categoria_producto, # NUEVO
+        "form_crear_categoria_insumo": form_crear_categoria_insumo,
+        "form_crear_categoria_producto": form_crear_categoria_producto,
     }
-    return render(req, "deposito.html", context)
+    return render(req, "deposito/deposito.html", context)
 
 
 def control_calidad(req):
-    return render(req, "control_calidad.html")
+    return render(req, "control_calidad/control_calidad.html")
 
 def inicio(request):
     if request.user.is_authenticated:
@@ -97,20 +97,20 @@ def roles_permisos(request):
     # Asegúrate que Group y RolDescripcion son importados y usados correctamente
     roles = Group.objects.prefetch_related('permissions', 'descripcion_extendida').all()
     context = {'roles': roles}
-    return render(request, 'roles_permisos.html', context)
+    return render(request, 'dashboard/roles_permisos.html', context)
 
 
 @login_required # Añadir login_required
 def auditoria(request):
     auditorias = AuditoriaAcceso.objects.all().order_by('-fecha_acceso')
     context = {'auditorias': auditorias}
-    return render(request, 'auditoria.html', context)
+    return render(request, 'dashboard/auditoria.html', context)
 
 # --- CRUD de usuario (mantener como estaba si funcionaba) ---
 @login_required
 def lista_usuarios(request):
     usuarios = User.objects.all().prefetch_related('groups') # prefetch groups para eficiencia
-    return render(request, 'usuarios.html', {'usuarios': usuarios})
+    return render(request, 'dashboard/usuarios.html', {'usuarios': usuarios})
 
 """ @login_required
 @require_POST # Es buena práctica restringir a POST para acciones que modifican datos
@@ -169,7 +169,7 @@ def crear_usuario(request):
 """
 @login_required
 def dashboard_view(request):
-    return render(request, 'dashboard.html')
+    return render(request, 'dashboard/dashboard.html')
 
 @login_required
 def logout_view(request):
@@ -182,20 +182,20 @@ def roles_permisos(request):
     # Asegúrate que Group y RolDescripcion son importados y usados correctamente
     roles = Group.objects.prefetch_related('permissions', 'descripcion_extendida').all()
     context = {'roles': roles}
-    return render(request, 'roles_permisos.html', context)
+    return render(request, 'dashboard/roles_permisos.html', context)
 
 
 @login_required # Añadir login_required
 def auditoria(request):
     auditorias = AuditoriaAcceso.objects.all().order_by('-fecha_acceso')
     context = {'auditorias': auditorias}
-    return render(request, 'auditoria.html', context)
+    return render(request, 'dashboard/auditoria.html', context)
 
 # --- CRUD de usuario (mantener como estaba si funcionaba) ---
 @login_required
 def lista_usuarios(request):
     usuarios = User.objects.all().prefetch_related('groups') # prefetch groups para eficiencia
-    return render(request, 'usuarios.html', {'usuarios': usuarios})
+    return render(request, 'dashboard/usuarios.html', {'usuarios': usuarios})
 
 @login_required
 # @require_POST # Descomentar si es solo AJAX POST
@@ -768,22 +768,22 @@ def actualizar_permisos_rol_ajax(request):
 
 # --- Rutas y vistas para botones de sidebar de Compras y Producción (mantener si ya existen) ---
 def desglose(req):
-    return render(req, "desglose.html")
+    return render(req, "compras/desglose.html")
 
 def seguimiento(req):
-    return render(req, "seguimiento.html")
+    return render(req, "compras/seguimiento.html")
 
 def tracking(req):
-    return render(req, "tracking.html")
+    return render(req, "compras/tracking.html")
 
 def desglose2(req):
-    return render(req, "desglose2.html")
+    return render(req, "compras/desglose2.html")
 
 def ordenes(req):
-    return render(req, "ordenes.html")
+    return render(req, "produccion/ordenes.html")
 
 def planificacion(req):
-    return render(req, "planificacion.html")
+    return render(req, "produccion/planificacion.html")
 
 def reportes(req):
-    return render(req, "reportes.html")
+    return render(req, "produccion/reportes.html")

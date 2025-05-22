@@ -16,11 +16,9 @@ class CategoriaProductoTerminado(models.Model):
 
 class ProductoTerminado(models.Model):
     descripcion = models.CharField(max_length=100)
-    # CAMBIO: ForeignKey a CategoriaProductoTerminado
     categoria = models.ForeignKey(CategoriaProductoTerminado, on_delete=models.SET_NULL, null=True, blank=True)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
-    # OPCIONAL: Si quieres imagen para ProductoTerminado
     imagen = models.ImageField(upload_to='productos_terminados/', null=True, blank=True)
 
 
@@ -29,7 +27,6 @@ class ProductoTerminado(models.Model):
 
 class CategoriaInsumo(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
-    # AÑADIDO: Campo de imagen
     imagen = models.ImageField(upload_to='categorias_insumos/', null=True, blank=True)
 
     class Meta:

@@ -5,31 +5,7 @@
 {% block title %}Depósito - Luminova{% endblock %}
 
 {% block sidebar_content %}
-    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-primary sidebar collapse border-end full-height" style="border-top-left-radius: 25px; border-top-right-radius: 25px;">
-        <div class="position-sticky pt-4">
-            <h6 class="sidebar-heading d-flex justify-content-center align-items-center px-3 mt-4 mb-1 text-white fw-bold">
-                <span>Depósito</span>
-            </h6>
-            <hr class="text-white">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalCrearCategoriaInsumo">
-                        <i class="bi bi-folder-plus me-2"></i> <span class="ms-2">Crear Categoría Insumo</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalCrearCategoriaProducto">
-                        <i class="bi bi-folder-plus me-2"></i> <span class="ms-2">Crear Categoría Prod.</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link text-white fw-bold custom-active-button d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#modalBuscarArticulo">
-                        <i class="bi bi-search me-2"></i> <span class="ms-2">Buscar Artículo</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    {% include 'deposito/sidebar_deposito.html' %}
 {% endblock %}
 
 {% block content %}
@@ -175,14 +151,14 @@
         </div>
     </div>
 
-    {% include "modals_deposito/modal_items_table.html" %}
-    {% include "modals_deposito/modal_crear_categoria_insumo.html" %}
-    {% include "modals_deposito/modal_crear_categoria_producto.html" %}
-    {% include "modals_deposito/modal_agregar_insumo.html" %}
-    {% include "modals_deposito/modal_editar_insumo.html" %}
-    {% include "modals_deposito/modal_agregar_producto.html" %}
-    {% include "modals_deposito/modal_editar_producto.html" %}
-    {% include "modals_deposito/modal_buscar_articulo.html" %}
+    {% include "deposito/modals/modal_items_table.html" %}
+    {% include "deposito/modals/modal_crear_categoria_insumo.html" %}
+    {% include "deposito/modals/modal_crear_categoria_producto.html" %}
+    {% include "deposito/modals/modal_agregar_insumo.html" %}
+    {% include "deposito/modals/modal_editar_insumo.html" %}
+    {% include "deposito/modals/modal_agregar_producto.html" %}
+    {% include "deposito/modals/modal_editar_producto.html" %}
+    {% include "deposito/modals/modal_buscar_articulo.html" %}
 
     <script>
         // Definición de URLs para que deposito_scripts.js pueda acceder a ellas
@@ -198,9 +174,9 @@
         const URL_ELIMINAR_ARTICULO = "{% url 'App_LUMINOVA:eliminar_articulo_ajax' %}";
 
         // URLs estáticas
-        const STATIC_URL_PLACEHOLDER_ITEM = "{% static 'img/placeholder_item.png' %}"; // Asegúrate que esta imagen exista
-        const STATIC_URL_DEFAULT_CAT_INSUMO = "{% static 'img/default_category_insumo.png' %}";
-        const STATIC_URL_DEFAULT_CAT_PRODUCTO = "{% static 'img/default_category_product.png' %}";
+        const STATIC_URL_PLACEHOLDER_ITEM = "{% static 'App_Luminova/img/placeholder_item.png' %}"; // Asegúrate que esta imagen exista
+        const STATIC_URL_DEFAULT_CAT_INSUMO = "{% static 'App_Luminova/img/default_category_insumo.png' %}";
+        const STATIC_URL_DEFAULT_CAT_PRODUCTO = "{% static 'App_Luminova/img/default_category_product.png' %}";
     </script>
     <script src="{% static 'js/deposito_scripts.js' %}"></script>
 {% endblock %}
