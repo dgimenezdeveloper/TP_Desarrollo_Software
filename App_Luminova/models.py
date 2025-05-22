@@ -101,7 +101,7 @@ class RolDescripcion(models.Model):
 
 class AuditoriaAcceso(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    fecha_acceso = models.DateTimeField(auto_now_add=True)
+    fecha_acceso = models.DateTimeField(auto_now_add=True) # CORRECTO
     accion = models.CharField(max_length=255)
 
     class Meta:
